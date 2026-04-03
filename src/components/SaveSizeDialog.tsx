@@ -48,7 +48,8 @@ export function SaveSizeDialog({
             </p>
             {maxPresetsReached && (
               <p className="text-xs text-orange-400 mt-2">
-                You've reached the 5 preset limit. Delete an existing preset to add a new one.
+                You've reached the 5 preset limit. Delete an existing preset to
+                add a new one.
               </p>
             )}
           </div>

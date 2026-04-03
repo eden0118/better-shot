@@ -3,7 +3,10 @@ interface OnboardingProgressProps {
   totalSteps: number;
 }
 
-export function OnboardingProgress({ currentStep, totalSteps }: OnboardingProgressProps) {
+export function OnboardingProgress({
+  currentStep,
+  totalSteps,
+}: OnboardingProgressProps) {
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
       {Array.from({ length: totalSteps }).map((_, index) => {

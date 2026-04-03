@@ -1,32 +1,47 @@
-import { convertFileSrc} from "@tauri-apps/api/core";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { Store } from "@tauri-apps/plugin-store";
 import { createHighQualityCanvas } from "./canvas-utils";
-import { resolveBackgroundPath, getDefaultBackgroundPath } from "./asset-registry";
+import {
+  resolveBackgroundPath,
+  getDefaultBackgroundPath,
+} from "./asset-registry";
 
-type BackgroundType = "transparent" | "white" | "black" | "gray" | "custom" | "image" | "gradient";
+type BackgroundType =
+  | "transparent"
+  | "white"
+  | "black"
+  | "gray"
+  | "custom"
+  | "image"
+  | "gradient";
 
 export async function processScreenshotWithDefaultBackground(
-  imagePath: string
+  imagePath: string,
 ): Promise<string> {
   return new Promise(async (resolve, reject) => {
     let backgroundType: BackgroundType = "image";
     let customColor = "#667eea";
     let defaultBgImage: string = getDefaultBackgroundPath();
     let bgImage: HTMLImageElement | null = null;
-    
+
     try {
       const store = await Store.load("settings.json");
-      const storedBgType = await store.get<BackgroundType>("defaultBackgroundType");
+      const storedBgType = await store.get<BackgroundType>(
+        "defaultBackgroundType",
+      );
       const storedCustomColor = await store.get<string>("defaultCustomColor");
       const storedDefaultBg = await store.get<string>("defaultBackgroundImage");
-      
+
       if (storedBgType) {
         backgroundType = storedBgType;
       }
       if (storedCustomColor) {
         customColor = storedCustomColor;
       }
-      if (storedDefaultBg && (backgroundType === "image" || backgroundType === "gradient")) {
+      if (
+        storedDefaultBg &&
+        (backgroundType === "image" || backgroundType === "gradient")
+      ) {
         defaultBgImage = resolveBackgroundPath(storedDefaultBg);
       }
     } catch (err) {
@@ -35,7 +50,7 @@ export async function processScreenshotWithDefaultBackground(
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-    
+
     img.onload = async () => {
       try {
         const avgDimension = (img.width + img.height) / 2;
@@ -48,7 +63,7 @@ export async function processScreenshotWithDefaultBackground(
         if (backgroundType === "image" || backgroundType === "gradient") {
           bgImage = new Image();
           bgImage.crossOrigin = "anonymous";
-          
+
           bgImage.onload = () => {
             try {
               const isGradient = backgroundType === "gradient";
@@ -90,17 +105,17 @@ export async function processScreenshotWithDefaultBackground(
                   }
                 },
                 "image/png",
-                1.0
+                1.0,
               );
             } catch (err) {
               reject(err);
             }
           };
-          
+
           bgImage.onerror = () => {
             reject(new Error("Failed to load background image"));
           };
-          
+
           bgImage.src = defaultBgImage;
         } else {
           try {
@@ -126,17 +141,19 @@ export async function processScreenshotWithDefaultBackground(
               paddingBottom,
               paddingLeft,
               paddingRight,
-              shadow: isTransparent ? {
-                blur: 0,
-                offsetX: 0,
-                offsetY: 0,
-                opacity: 0,
-              } : {
-                blur: 33,
-                offsetX: 18,
-                offsetY: 23,
-                opacity: 39,
-              },
+              shadow: isTransparent
+                ? {
+                    blur: 0,
+                    offsetX: 0,
+                    offsetY: 0,
+                    opacity: 0,
+                  }
+                : {
+                    blur: 33,
+                    offsetX: 18,
+                    offsetY: 23,
+                    opacity: 39,
+                  },
             });
 
             canvas.toBlob(
@@ -155,7 +172,7 @@ export async function processScreenshotWithDefaultBackground(
                 }
               },
               "image/png",
-              1.0
+              1.0,
             );
           } catch (err) {
             reject(err);
@@ -165,7 +182,7 @@ export async function processScreenshotWithDefaultBackground(
         reject(err);
       }
     };
-    
+
     img.onerror = () => {
       reject(new Error(`Failed to load image from: ${imagePath}`));
     };

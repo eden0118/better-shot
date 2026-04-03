@@ -67,6 +67,7 @@ pnpm tauri dev
 ```
 
 This will:
+
 - Start the Vite dev server for the frontend
 - Compile the Rust backend
 - Launch the Tauri application window with hot-reload
@@ -236,7 +237,7 @@ import { useState } from "react";
 
 export function MyComponent() {
   const [value, setValue] = useState("");
-  
+
   return (
     <Card>
       <CardContent>
@@ -338,6 +339,7 @@ When creating a PR, include:
 ## Technology Stack
 
 ### Frontend
+
 - **React 19**: UI framework
 - **TypeScript 5.8**: Type safety
 - **Vite 7**: Build tool and dev server
@@ -345,6 +347,7 @@ When creating a PR, include:
 - **Sonner**: Toast notifications
 
 ### Backend
+
 - **Rust**: System programming language
 - **Tauri 2**: Desktop app framework
 - **xcap**: Screenshot capture library
@@ -352,10 +355,12 @@ When creating a PR, include:
 - **objc2-vision**: macOS Vision framework bindings for OCR text recognition
 
 ### Plugins
+
 - **@tauri-apps/plugin-store**: Settings persistence
 - **@tauri-apps/plugin-global-shortcut**: Global hotkeys
 
 ### Development Tools
+
 - **pnpm**: Package manager
 - **TypeScript**: Type checking
 - **Cargo**: Rust package manager
@@ -422,6 +427,7 @@ The Quick Overlay (`src/components/overlay/QuickOverlay.tsx`) is a floating wind
 5. **Positioning**: The overlay is positioned near the bottom-right of the monitor where the capture occurred
 
 To modify the fade timing or behavior:
+
 - Edit the `fadeDelayMs` and `fadeDurationMs` constants in `QuickOverlay.tsx`
 - The window is hidden using `getCurrentWindow().hide()` after the fade completes
 

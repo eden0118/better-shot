@@ -1,7 +1,22 @@
 import { memo } from "react";
-import { Circle, Square, Minus, ArrowUpRight, Type, Hash, MousePointer2, Trash2, Scan } from "lucide-react";
+import {
+  Circle,
+  Square,
+  Minus,
+  ArrowUpRight,
+  Type,
+  Hash,
+  MousePointer2,
+  Trash2,
+  Scan,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ToolType } from "@/types/annotations";
 import { cn } from "@/lib/utils";
 
@@ -12,9 +27,17 @@ interface AnnotationToolbarProps {
 }
 
 const tools: Array<{ type: ToolType; icon: React.ReactNode; label: string }> = [
-  { type: "select", icon: <MousePointer2 className="size-4" />, label: "Select" },
+  {
+    type: "select",
+    icon: <MousePointer2 className="size-4" />,
+    label: "Select",
+  },
   { type: "circle", icon: <Circle className="size-4" />, label: "Circle" },
-  { type: "rectangle", icon: <Square className="size-4" />, label: "Rectangle" },
+  {
+    type: "rectangle",
+    icon: <Square className="size-4" />,
+    label: "Rectangle",
+  },
   { type: "line", icon: <Minus className="size-4" />, label: "Line" },
   { type: "arrow", icon: <ArrowUpRight className="size-4" />, label: "Arrow" },
   { type: "number", icon: <Hash className="size-4" />, label: "Number" },
@@ -22,7 +45,11 @@ const tools: Array<{ type: ToolType; icon: React.ReactNode; label: string }> = [
   { type: "blur", icon: <Scan className="size-4" />, label: "Blur an area" },
 ];
 
-export const AnnotationToolbar = memo(function AnnotationToolbar({ selectedTool, onToolSelect, onDelete }: AnnotationToolbarProps) {
+export const AnnotationToolbar = memo(function AnnotationToolbar({
+  selectedTool,
+  onToolSelect,
+  onDelete,
+}: AnnotationToolbarProps) {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex items-center gap-1 px-4 py-2 border-b border-border bg-card">
@@ -37,7 +64,7 @@ export const AnnotationToolbar = memo(function AnnotationToolbar({ selectedTool,
                   "size-8 rounded-md",
                   selectedTool === tool.type
                     ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary",
                 )}
                 aria-label={tool.label}
               >

@@ -5,8 +5,13 @@ import { Trash2, Plus } from "lucide-react";
 import { useState } from "react";
 
 export function PresetSizesManager() {
-  const { presetSizes, isLoading, addPresetSize, updatePresetSize, deletePresetSize } =
-    usePresetSizes();
+  const {
+    presetSizes,
+    isLoading,
+    addPresetSize,
+    updatePresetSize,
+    deletePresetSize,
+  } = usePresetSizes();
 
   const [nameInput, setNameInput] = useState("");
   const [widthInput, setWidthInput] = useState("");
@@ -27,7 +32,12 @@ export function PresetSizesManager() {
 
   const handleUpdatePreset = (id: string) => {
     if (editingName && editingWidth && editingHeight) {
-      updatePresetSize(id, editingName, parseInt(editingWidth), parseInt(editingHeight));
+      updatePresetSize(
+        id,
+        editingName,
+        parseInt(editingWidth),
+        parseInt(editingHeight),
+      );
       setEditingId(null);
       setEditingName("");
       setEditingWidth("");
@@ -49,7 +59,9 @@ export function PresetSizesManager() {
           <CardTitle className="text-base">Preset Screenshot Sizes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground">Loading preset sizes...</div>
+          <div className="text-sm text-muted-foreground">
+            Loading preset sizes...
+          </div>
         </CardContent>
       </Card>
     );
@@ -60,7 +72,8 @@ export function PresetSizesManager() {
       <CardHeader>
         <CardTitle className="text-base">Preset Screenshot Sizes</CardTitle>
         <p className="text-sm text-muted-foreground mt-2">
-          Create and manage frequently used screenshot dimensions for quick access
+          Create and manage frequently used screenshot dimensions for quick
+          access
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -73,7 +86,12 @@ export function PresetSizesManager() {
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && nameInput && widthInput && heightInput) {
+                if (
+                  e.key === "Enter" &&
+                  nameInput &&
+                  widthInput &&
+                  heightInput
+                ) {
                   handleAddPreset();
                 }
               }}
@@ -121,7 +139,10 @@ export function PresetSizesManager() {
               {presetSizes.map((preset) =>
                 editingId === preset.id ? (
                   // Edit Mode
-                  <div key={preset.id} className="p-3 bg-secondary/50 rounded-lg border border-border space-y-2">
+                  <div
+                    key={preset.id}
+                    className="p-3 bg-secondary/50 rounded-lg border border-border space-y-2"
+                  >
                     <input
                       placeholder="Name"
                       value={editingName}
@@ -201,7 +222,7 @@ export function PresetSizesManager() {
                       </Button>
                     </div>
                   </div>
-                )
+                ),
               )}
             </div>
           )}

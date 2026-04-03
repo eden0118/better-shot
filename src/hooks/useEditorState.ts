@@ -1,10 +1,23 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Store } from "@tauri-apps/plugin-store";
-import { gradientOptions, type GradientOption } from "@/components/editor/BackgroundSelector";
-import { resolveBackgroundPath, getDefaultBackgroundPath } from "@/lib/asset-registry";
+import {
+  gradientOptions,
+  type GradientOption,
+} from "@/components/editor/BackgroundSelector";
+import {
+  resolveBackgroundPath,
+  getDefaultBackgroundPath,
+} from "@/lib/asset-registry";
 import { Annotation } from "@/types/annotations";
 
-export type BackgroundType = "transparent" | "white" | "black" | "gray" | "gradient" | "custom" | "image";
+export type BackgroundType =
+  | "transparent"
+  | "white"
+  | "black"
+  | "gray"
+  | "gradient"
+  | "custom"
+  | "image";
 
 export interface ShadowSettings {
   blur: number;
@@ -36,15 +49,15 @@ export interface EditorStateResult {
   // Current state
   settings: EditorSettings;
   annotations: Annotation[];
-  
+
   // History state
   canUndo: boolean;
   canRedo: boolean;
-  
+
   // History actions
   undo: () => void;
   redo: () => void;
-  
+
   // Settings actions
   setBackgroundType: (type: BackgroundType) => void;
   setCustomColor: (color: string) => void;
@@ -58,7 +71,7 @@ export interface EditorStateResult {
   setShadowOffsetX: (offsetX: number) => void;
   setShadowOffsetY: (offsetY: number) => void;
   setShadowOpacity: (opacity: number) => void;
-  
+
   // Annotation actions
   addAnnotation: (annotation: Annotation) => void;
   updateAnnotation: (annotation: Annotation) => void;
@@ -98,7 +111,7 @@ export function useEditorState(): EditorStateResult {
   const pastRef = useRef<EditorState[]>([]);
   const futureRef = useRef<EditorState[]>([]);
   const [, forceUpdate] = useState(0);
-  
+
   // Load default background from store on mount
   useEffect(() => {
     const loadDefaultBackground = async () => {
@@ -107,7 +120,7 @@ export function useEditorState(): EditorStateResult {
         const storedBg = await store.get<string>("defaultBackgroundImage");
         if (storedBg) {
           const resolvedPath = resolveBackgroundPath(storedBg);
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             settings: {
               ...prev.settings,
@@ -124,24 +137,24 @@ export function useEditorState(): EditorStateResult {
 
   // Push current state to history and set new state
   const pushState = useCallback((newState: EditorState) => {
-    setState(prev => {
+    setState((prev) => {
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
 
   // Update state with a partial settings update
   const updateSettings = useCallback((updates: Partial<EditorSettings>) => {
-    setState(prev => {
+    setState((prev) => {
       const newState = {
         ...prev,
         settings: { ...prev.settings, ...updates },
       };
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
@@ -149,12 +162,15 @@ export function useEditorState(): EditorStateResult {
   // Undo
   const undo = useCallback(() => {
     if (pastRef.current.length === 0) return;
-    
-    setState(prev => {
+
+    setState((prev) => {
       const previous = pastRef.current[pastRef.current.length - 1];
       pastRef.current = pastRef.current.slice(0, -1);
-      futureRef.current = [prev, ...futureRef.current].slice(0, MAX_HISTORY_SIZE);
-      forceUpdate(n => n + 1);
+      futureRef.current = [prev, ...futureRef.current].slice(
+        0,
+        MAX_HISTORY_SIZE,
+      );
+      forceUpdate((n) => n + 1);
       return previous;
     });
   }, []);
@@ -162,55 +178,79 @@ export function useEditorState(): EditorStateResult {
   // Redo
   const redo = useCallback(() => {
     if (futureRef.current.length === 0) return;
-    
-    setState(prev => {
+
+    setState((prev) => {
       const next = futureRef.current[0];
       futureRef.current = futureRef.current.slice(1);
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return next;
     });
   }, []);
 
   // Settings actions
-  const setBackgroundType = useCallback((type: BackgroundType) => {
-    updateSettings({ backgroundType: type });
-  }, [updateSettings]);
+  const setBackgroundType = useCallback(
+    (type: BackgroundType) => {
+      updateSettings({ backgroundType: type });
+    },
+    [updateSettings],
+  );
 
-  const setCustomColor = useCallback((color: string) => {
-    updateSettings({ customColor: color });
-  }, [updateSettings]);
+  const setCustomColor = useCallback(
+    (color: string) => {
+      updateSettings({ customColor: color });
+    },
+    [updateSettings],
+  );
 
-  const setSelectedImage = useCallback((src: string) => {
-    updateSettings({ selectedImageSrc: src });
-  }, [updateSettings]);
+  const setSelectedImage = useCallback(
+    (src: string) => {
+      updateSettings({ selectedImageSrc: src });
+    },
+    [updateSettings],
+  );
 
-  const setGradient = useCallback((gradient: GradientOption) => {
-    updateSettings({
-      gradientId: gradient.id,
-      gradientSrc: gradient.src,
-      gradientColors: gradient.colors,
-    });
-  }, [updateSettings]);
+  const setGradient = useCallback(
+    (gradient: GradientOption) => {
+      updateSettings({
+        gradientId: gradient.id,
+        gradientSrc: gradient.src,
+        gradientColors: gradient.colors,
+      });
+    },
+    [updateSettings],
+  );
 
-  const setBlurAmount = useCallback((amount: number) => {
-    updateSettings({ blurAmount: amount });
-  }, [updateSettings]);
+  const setBlurAmount = useCallback(
+    (amount: number) => {
+      updateSettings({ blurAmount: amount });
+    },
+    [updateSettings],
+  );
 
-  const setNoiseAmount = useCallback((amount: number) => {
-    updateSettings({ noiseAmount: amount });
-  }, [updateSettings]);
+  const setNoiseAmount = useCallback(
+    (amount: number) => {
+      updateSettings({ noiseAmount: amount });
+    },
+    [updateSettings],
+  );
 
-  const setBorderRadius = useCallback((radius: number) => {
-    updateSettings({ borderRadius: radius });
-  }, [updateSettings]);
+  const setBorderRadius = useCallback(
+    (radius: number) => {
+      updateSettings({ borderRadius: radius });
+    },
+    [updateSettings],
+  );
 
-  const handleImageSelect = useCallback((imageSrc: string) => {
-    updateSettings({ selectedImageSrc: imageSrc, backgroundType: "image" });
-  }, [updateSettings]);
+  const handleImageSelect = useCallback(
+    (imageSrc: string) => {
+      updateSettings({ selectedImageSrc: imageSrc, backgroundType: "image" });
+    },
+    [updateSettings],
+  );
 
   const setShadowBlur = useCallback((blur: number) => {
-    setState(prev => {
+    setState((prev) => {
       const newState = {
         ...prev,
         settings: {
@@ -220,13 +260,13 @@ export function useEditorState(): EditorStateResult {
       };
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
 
   const setShadowOffsetX = useCallback((offsetX: number) => {
-    setState(prev => {
+    setState((prev) => {
       const newState = {
         ...prev,
         settings: {
@@ -236,13 +276,13 @@ export function useEditorState(): EditorStateResult {
       };
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
 
   const setShadowOffsetY = useCallback((offsetY: number) => {
-    setState(prev => {
+    setState((prev) => {
       const newState = {
         ...prev,
         settings: {
@@ -252,13 +292,13 @@ export function useEditorState(): EditorStateResult {
       };
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
 
   const setShadowOpacity = useCallback((opacity: number) => {
-    setState(prev => {
+    setState((prev) => {
       const newState = {
         ...prev,
         settings: {
@@ -268,100 +308,106 @@ export function useEditorState(): EditorStateResult {
       };
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
 
   // Annotation actions
   const addAnnotation = useCallback((annotation: Annotation) => {
-    setState(prev => {
+    setState((prev) => {
       const newState = {
         ...prev,
         annotations: [...prev.annotations, annotation],
       };
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
 
   const updateAnnotation = useCallback((annotation: Annotation) => {
-    setState(prev => {
+    setState((prev) => {
       const newState = {
         ...prev,
-        annotations: prev.annotations.map(ann => 
-          ann.id === annotation.id ? annotation : ann
+        annotations: prev.annotations.map((ann) =>
+          ann.id === annotation.id ? annotation : ann,
         ),
       };
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
 
   const deleteAnnotation = useCallback((id: string) => {
-    setState(prev => {
+    setState((prev) => {
       const newState = {
         ...prev,
-        annotations: prev.annotations.filter(ann => ann.id !== id),
+        annotations: prev.annotations.filter((ann) => ann.id !== id),
       };
       pastRef.current = [...pastRef.current, prev].slice(-MAX_HISTORY_SIZE);
       futureRef.current = [];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
       return newState;
     });
   }, []);
 
-  const setAnnotations = useCallback((annotations: Annotation[]) => {
-    pushState({ ...state, annotations });
-  }, [pushState, state]);
+  const setAnnotations = useCallback(
+    (annotations: Annotation[]) => {
+      pushState({ ...state, annotations });
+    },
+    [pushState, state],
+  );
 
-  return useMemo(() => ({
-    settings: state.settings,
-    annotations: state.annotations,
-    canUndo: pastRef.current.length > 0,
-    canRedo: futureRef.current.length > 0,
-    undo,
-    redo,
-    setBackgroundType,
-    setCustomColor,
-    setSelectedImage,
-    setGradient,
-    setBlurAmount,
-    setNoiseAmount,
-    setBorderRadius,
-    handleImageSelect,
-    setShadowBlur,
-    setShadowOffsetX,
-    setShadowOffsetY,
-    setShadowOpacity,
-    addAnnotation,
-    updateAnnotation,
-    deleteAnnotation,
-    setAnnotations,
-  }), [
-    state.settings,
-    state.annotations,
-    undo,
-    redo,
-    setBackgroundType,
-    setCustomColor,
-    setSelectedImage,
-    setGradient,
-    setBlurAmount,
-    setNoiseAmount,
-    setBorderRadius,
-    handleImageSelect,
-    setShadowBlur,
-    setShadowOffsetX,
-    setShadowOffsetY,
-    setShadowOpacity,
-    addAnnotation,
-    updateAnnotation,
-    deleteAnnotation,
-    setAnnotations,
-  ]);
+  return useMemo(
+    () => ({
+      settings: state.settings,
+      annotations: state.annotations,
+      canUndo: pastRef.current.length > 0,
+      canRedo: futureRef.current.length > 0,
+      undo,
+      redo,
+      setBackgroundType,
+      setCustomColor,
+      setSelectedImage,
+      setGradient,
+      setBlurAmount,
+      setNoiseAmount,
+      setBorderRadius,
+      handleImageSelect,
+      setShadowBlur,
+      setShadowOffsetX,
+      setShadowOffsetY,
+      setShadowOpacity,
+      addAnnotation,
+      updateAnnotation,
+      deleteAnnotation,
+      setAnnotations,
+    }),
+    [
+      state.settings,
+      state.annotations,
+      undo,
+      redo,
+      setBackgroundType,
+      setCustomColor,
+      setSelectedImage,
+      setGradient,
+      setBlurAmount,
+      setNoiseAmount,
+      setBorderRadius,
+      handleImageSelect,
+      setShadowBlur,
+      setShadowOffsetX,
+      setShadowOffsetY,
+      setShadowOpacity,
+      addAnnotation,
+      updateAnnotation,
+      deleteAnnotation,
+      setAnnotations,
+    ],
+  );
 }

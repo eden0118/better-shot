@@ -25,14 +25,14 @@ export function OnboardingStep({
         </div>
       )}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-foreground text-balance">{title}</h2>
-        <p className="text-muted-foreground text-sm text-pretty max-w-md mx-auto">{description}</p>
+        <h2 className="text-2xl font-semibold text-foreground text-balance">
+          {title}
+        </h2>
+        <p className="text-muted-foreground text-sm text-pretty max-w-md mx-auto">
+          {description}
+        </p>
       </div>
-      {children && (
-        <div className="mt-6">
-          {children}
-        </div>
-      )}
+      {children && <div className="mt-6">{children}</div>}
       {highlightElement && (
         <div
           id={highlightElement}

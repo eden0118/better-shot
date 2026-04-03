@@ -15,7 +15,10 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { Store } from "@tauri-apps/plugin-store";
-import { gradientOptions, type GradientOption } from "@/components/editor/BackgroundSelector";
+import {
+  gradientOptions,
+  type GradientOption,
+} from "@/components/editor/BackgroundSelector";
 import { resolveBackgroundPath } from "@/lib/asset-registry";
 import { Annotation } from "@/types/annotations";
 
@@ -23,7 +26,14 @@ import { Annotation } from "@/types/annotations";
 // Types
 // ============================================================================
 
-export type BackgroundType = "transparent" | "white" | "black" | "gray" | "gradient" | "custom" | "image";
+export type BackgroundType =
+  | "transparent"
+  | "white"
+  | "black"
+  | "gray"
+  | "gradient"
+  | "custom"
+  | "image";
 
 export interface ShadowSettings {
   blur: number;
@@ -194,14 +204,20 @@ export const useEditorStore = create<EditorStore>()(
           const store = await Store.load("settings.json");
 
           // Load background settings
-          const storedBgType = await store.get<BackgroundType>("defaultBackgroundType");
-          const storedCustomColor = await store.get<string>("defaultCustomColor");
+          const storedBgType = await store.get<BackgroundType>(
+            "defaultBackgroundType",
+          );
+          const storedCustomColor =
+            await store.get<string>("defaultCustomColor");
           const storedBg = await store.get<string>("defaultBackgroundImage");
 
           // Load effect settings
           const storedBlurAmount = await store.get<number>("defaultBlurAmount");
-          const storedNoiseAmount = await store.get<number>("defaultNoiseAmount");
-          const storedBorderRadius = await store.get<number>("defaultBorderRadius");
+          const storedNoiseAmount =
+            await store.get<number>("defaultNoiseAmount");
+          const storedBorderRadius = await store.get<number>(
+            "defaultBorderRadius",
+          );
           const storedShadow = await store.get<ShadowSettings>("defaultShadow");
 
           set((state) => {
@@ -221,7 +237,7 @@ export const useEditorStore = create<EditorStore>()(
               if (storedBg.startsWith("gradient-")) {
                 const gradientIndex = storedBg.replace("gradient-", "");
                 const gradient = gradientOptions.find(
-                  (option) => option.id === `mesh-${gradientIndex}`
+                  (option) => option.id === `mesh-${gradientIndex}`,
                 );
 
                 if (gradient) {
@@ -244,7 +260,10 @@ export const useEditorStore = create<EditorStore>()(
             if (storedNoiseAmount !== null && storedNoiseAmount !== undefined) {
               state.settings.noiseAmount = storedNoiseAmount;
             }
-            if (storedBorderRadius !== null && storedBorderRadius !== undefined) {
+            if (
+              storedBorderRadius !== null &&
+              storedBorderRadius !== undefined
+            ) {
               state.settings.borderRadius = storedBorderRadius;
             }
             if (storedShadow) {
@@ -425,7 +444,7 @@ export const useEditorStore = create<EditorStore>()(
           paddingTop: padding,
           paddingBottom: padding,
           paddingLeft: padding,
-          paddingRight: padding
+          paddingRight: padding,
         });
       },
 
@@ -492,7 +511,9 @@ export const useEditorStore = create<EditorStore>()(
 
       updateAnnotationTransient: (annotation) => {
         set((state) => {
-          const index = state.annotations.findIndex((a) => a.id === annotation.id);
+          const index = state.annotations.findIndex(
+            (a) => a.id === annotation.id,
+          );
           if (index !== -1) {
             state.annotations[index] = annotation;
           }
@@ -502,7 +523,9 @@ export const useEditorStore = create<EditorStore>()(
       updateAnnotation: (annotation) => {
         get().pushHistory();
         set((state) => {
-          const index = state.annotations.findIndex((a) => a.id === annotation.id);
+          const index = state.annotations.findIndex(
+            (a) => a.id === annotation.id,
+          );
           if (index !== -1) {
             state.annotations[index] = annotation;
           }
@@ -603,8 +626,8 @@ export const useEditorStore = create<EditorStore>()(
           state._isInitialized = false;
         });
       },
-    }))
-  )
+    })),
+  ),
 );
 
 // ============================================================================
@@ -613,69 +636,165 @@ export const useEditorStore = create<EditorStore>()(
 
 // Settings selectors
 export const useSettings = () => useEditorStore((state) => state.settings);
-export const useBackgroundType = () => useEditorStore((state) => state.settings.backgroundType);
-export const useNoiseAmount = () => useEditorStore((state) => state.settings.noiseAmount);
-export const useBorderRadius = () => useEditorStore((state) => state.settings.borderRadius);
-export const usePaddingTop = () => useEditorStore((state) => state.settings.paddingTop);
-export const usePaddingBottom = () => useEditorStore((state) => state.settings.paddingBottom);
-export const usePaddingLeft = () => useEditorStore((state) => state.settings.paddingLeft);
-export const usePaddingRight = () => useEditorStore((state) => state.settings.paddingRight);
+export const useBackgroundType = () =>
+  useEditorStore((state) => state.settings.backgroundType);
+export const useNoiseAmount = () =>
+  useEditorStore((state) => state.settings.noiseAmount);
+export const useBorderRadius = () =>
+  useEditorStore((state) => state.settings.borderRadius);
+export const usePaddingTop = () =>
+  useEditorStore((state) => state.settings.paddingTop);
+export const usePaddingBottom = () =>
+  useEditorStore((state) => state.settings.paddingBottom);
+export const usePaddingLeft = () =>
+  useEditorStore((state) => state.settings.paddingLeft);
+export const usePaddingRight = () =>
+  useEditorStore((state) => state.settings.paddingRight);
 export const useShadow = () => useEditorStore((state) => state.settings.shadow);
-export const useSelectedImageSrc = () => useEditorStore((state) => state.settings.selectedImageSrc);
-export const useGradientId = () => useEditorStore((state) => state.settings.gradientId);
+export const useSelectedImageSrc = () =>
+  useEditorStore((state) => state.settings.selectedImageSrc);
+export const useGradientId = () =>
+  useEditorStore((state) => state.settings.gradientId);
 
 // Annotation selectors
-export const useAnnotations = () => useEditorStore((state) => state.annotations);
+export const useAnnotations = () =>
+  useEditorStore((state) => state.annotations);
 
 // History selectors
-export const useCanUndo = () => useEditorStore((state) => state.past.length > 0);
-export const useCanRedo = () => useEditorStore((state) => state.future.length > 0);
+export const useCanUndo = () =>
+  useEditorStore((state) => state.past.length > 0);
+export const useCanRedo = () =>
+  useEditorStore((state) => state.future.length > 0);
 
 // Actions - accessed directly from store to ensure stable references
 // These functions are defined once in the store and never change
 export const editorActions = {
-  get initialize() { return useEditorStore.getState().initialize; },
-  get setBackgroundType() { return useEditorStore.getState().setBackgroundType; },
-  get setCustomColor() { return useEditorStore.getState().setCustomColor; },
-  get setSelectedImage() { return useEditorStore.getState().setSelectedImage; },
-  get setGradient() { return useEditorStore.getState().setGradient; },
-  get handleImageSelect() { return useEditorStore.getState().handleImageSelect; },
-  get setBlurAmount() { return useEditorStore.getState().setBlurAmount; },
-  get setBlurAmountTransient() { return useEditorStore.getState().setBlurAmountTransient; },
-  get setNoiseAmount() { return useEditorStore.getState().setNoiseAmount; },
-  get setNoiseAmountTransient() { return useEditorStore.getState().setNoiseAmountTransient; },
-  get setBorderRadius() { return useEditorStore.getState().setBorderRadius; },
-  get setBorderRadiusTransient() { return useEditorStore.getState().setBorderRadiusTransient; },
-  get setPaddingTop() { return useEditorStore.getState().setPaddingTop; },
-  get setPaddingTopTransient() { return useEditorStore.getState().setPaddingTopTransient; },
-  get setPaddingBottom() { return useEditorStore.getState().setPaddingBottom; },
-  get setPaddingBottomTransient() { return useEditorStore.getState().setPaddingBottomTransient; },
-  get setPaddingLeft() { return useEditorStore.getState().setPaddingLeft; },
-  get setPaddingLeftTransient() { return useEditorStore.getState().setPaddingLeftTransient; },
-  get setPaddingRight() { return useEditorStore.getState().setPaddingRight; },
-  get setPaddingRightTransient() { return useEditorStore.getState().setPaddingRightTransient; },
-  get setAllPadding() { return useEditorStore.getState().setAllPadding; },
-  get setAllPaddingTransient() { return useEditorStore.getState().setAllPaddingTransient; },
-  get setShadowBlur() { return useEditorStore.getState().setShadowBlur; },
-  get setShadowBlurTransient() { return useEditorStore.getState().setShadowBlurTransient; },
-  get setShadowOffsetX() { return useEditorStore.getState().setShadowOffsetX; },
-  get setShadowOffsetXTransient() { return useEditorStore.getState().setShadowOffsetXTransient; },
-  get setShadowOffsetY() { return useEditorStore.getState().setShadowOffsetY; },
-  get setShadowOffsetYTransient() { return useEditorStore.getState().setShadowOffsetYTransient; },
-  get setShadowOpacity() { return useEditorStore.getState().setShadowOpacity; },
-  get setShadowOpacityTransient() { return useEditorStore.getState().setShadowOpacityTransient; },
-  get saveEffectSettingsAsDefaults() { return useEditorStore.getState().saveEffectSettingsAsDefaults; },
-  get addAnnotation() { return useEditorStore.getState().addAnnotation; },
-  get updateAnnotation() { return useEditorStore.getState().updateAnnotation; },
-  get updateAnnotationTransient() { return useEditorStore.getState().updateAnnotationTransient; },
-  get deleteAnnotation() { return useEditorStore.getState().deleteAnnotation; },
-  get setAnnotations() { return useEditorStore.getState().setAnnotations; },
-  get undo() { return useEditorStore.getState().undo; },
-  get redo() { return useEditorStore.getState().redo; },
-  get pushHistory() { return useEditorStore.getState().pushHistory; },
-  get pauseHistory() { return useEditorStore.getState().pauseHistory; },
-  get resumeHistory() { return useEditorStore.getState().resumeHistory; },
-  get reset() { return useEditorStore.getState().reset; },
+  get initialize() {
+    return useEditorStore.getState().initialize;
+  },
+  get setBackgroundType() {
+    return useEditorStore.getState().setBackgroundType;
+  },
+  get setCustomColor() {
+    return useEditorStore.getState().setCustomColor;
+  },
+  get setSelectedImage() {
+    return useEditorStore.getState().setSelectedImage;
+  },
+  get setGradient() {
+    return useEditorStore.getState().setGradient;
+  },
+  get handleImageSelect() {
+    return useEditorStore.getState().handleImageSelect;
+  },
+  get setBlurAmount() {
+    return useEditorStore.getState().setBlurAmount;
+  },
+  get setBlurAmountTransient() {
+    return useEditorStore.getState().setBlurAmountTransient;
+  },
+  get setNoiseAmount() {
+    return useEditorStore.getState().setNoiseAmount;
+  },
+  get setNoiseAmountTransient() {
+    return useEditorStore.getState().setNoiseAmountTransient;
+  },
+  get setBorderRadius() {
+    return useEditorStore.getState().setBorderRadius;
+  },
+  get setBorderRadiusTransient() {
+    return useEditorStore.getState().setBorderRadiusTransient;
+  },
+  get setPaddingTop() {
+    return useEditorStore.getState().setPaddingTop;
+  },
+  get setPaddingTopTransient() {
+    return useEditorStore.getState().setPaddingTopTransient;
+  },
+  get setPaddingBottom() {
+    return useEditorStore.getState().setPaddingBottom;
+  },
+  get setPaddingBottomTransient() {
+    return useEditorStore.getState().setPaddingBottomTransient;
+  },
+  get setPaddingLeft() {
+    return useEditorStore.getState().setPaddingLeft;
+  },
+  get setPaddingLeftTransient() {
+    return useEditorStore.getState().setPaddingLeftTransient;
+  },
+  get setPaddingRight() {
+    return useEditorStore.getState().setPaddingRight;
+  },
+  get setPaddingRightTransient() {
+    return useEditorStore.getState().setPaddingRightTransient;
+  },
+  get setAllPadding() {
+    return useEditorStore.getState().setAllPadding;
+  },
+  get setAllPaddingTransient() {
+    return useEditorStore.getState().setAllPaddingTransient;
+  },
+  get setShadowBlur() {
+    return useEditorStore.getState().setShadowBlur;
+  },
+  get setShadowBlurTransient() {
+    return useEditorStore.getState().setShadowBlurTransient;
+  },
+  get setShadowOffsetX() {
+    return useEditorStore.getState().setShadowOffsetX;
+  },
+  get setShadowOffsetXTransient() {
+    return useEditorStore.getState().setShadowOffsetXTransient;
+  },
+  get setShadowOffsetY() {
+    return useEditorStore.getState().setShadowOffsetY;
+  },
+  get setShadowOffsetYTransient() {
+    return useEditorStore.getState().setShadowOffsetYTransient;
+  },
+  get setShadowOpacity() {
+    return useEditorStore.getState().setShadowOpacity;
+  },
+  get setShadowOpacityTransient() {
+    return useEditorStore.getState().setShadowOpacityTransient;
+  },
+  get saveEffectSettingsAsDefaults() {
+    return useEditorStore.getState().saveEffectSettingsAsDefaults;
+  },
+  get addAnnotation() {
+    return useEditorStore.getState().addAnnotation;
+  },
+  get updateAnnotation() {
+    return useEditorStore.getState().updateAnnotation;
+  },
+  get updateAnnotationTransient() {
+    return useEditorStore.getState().updateAnnotationTransient;
+  },
+  get deleteAnnotation() {
+    return useEditorStore.getState().deleteAnnotation;
+  },
+  get setAnnotations() {
+    return useEditorStore.getState().setAnnotations;
+  },
+  get undo() {
+    return useEditorStore.getState().undo;
+  },
+  get redo() {
+    return useEditorStore.getState().redo;
+  },
+  get pushHistory() {
+    return useEditorStore.getState().pushHistory;
+  },
+  get pauseHistory() {
+    return useEditorStore.getState().pauseHistory;
+  },
+  get resumeHistory() {
+    return useEditorStore.getState().resumeHistory;
+  },
+  get reset() {
+    return useEditorStore.getState().reset;
+  },
 };
 
 // Hook version - returns the stable actions object

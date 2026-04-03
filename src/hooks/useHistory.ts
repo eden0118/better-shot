@@ -15,11 +15,13 @@ export interface HistoryActions<T> {
 
 const MAX_HISTORY_SIZE = 50;
 
-export function useHistory<T>(initialValue: T): [HistoryState<T>, HistoryActions<T>] {
+export function useHistory<T>(
+  initialValue: T,
+): [HistoryState<T>, HistoryActions<T>] {
   const [current, setCurrent] = useState<T>(initialValue);
   const pastRef = useRef<T[]>([]);
   const futureRef = useRef<T[]>([]);
-  
+
   // Force re-render when history changes
   const [, forceUpdate] = useState(0);
 
@@ -36,11 +38,14 @@ export function useHistory<T>(initialValue: T): [HistoryState<T>, HistoryActions
 
   const undo = useCallback(() => {
     if (pastRef.current.length === 0) return;
-    
+
     setCurrent((prev) => {
       const previous = pastRef.current[pastRef.current.length - 1];
       pastRef.current = pastRef.current.slice(0, -1);
-      futureRef.current = [prev, ...futureRef.current].slice(0, MAX_HISTORY_SIZE);
+      futureRef.current = [prev, ...futureRef.current].slice(
+        0,
+        MAX_HISTORY_SIZE,
+      );
       forceUpdate((n) => n + 1);
       return previous;
     });
@@ -48,7 +53,7 @@ export function useHistory<T>(initialValue: T): [HistoryState<T>, HistoryActions
 
   const redo = useCallback(() => {
     if (futureRef.current.length === 0) return;
-    
+
     setCurrent((prev) => {
       const next = futureRef.current[0];
       futureRef.current = futureRef.current.slice(1);

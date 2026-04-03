@@ -12,14 +12,19 @@ interface PropertiesPanelProps {
   onUpdate: (annotation: Annotation) => void;
 }
 
-export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpdate }: PropertiesPanelProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["color"]));
+export const PropertiesPanel = memo(function PropertiesPanel({
+  annotation,
+  onUpdate,
+}: PropertiesPanelProps) {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(["color"]),
+  );
 
   useEffect(() => {
     if (!annotation) return;
-    
+
     const newExpanded = new Set(["color"]);
-    
+
     if (annotation.type === "text") {
       newExpanded.add("text");
     }
@@ -33,7 +38,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
       newExpanded.add("blur");
       newExpanded.delete("color");
     }
-    
+
     setExpandedSections(newExpanded);
   }, [annotation?.type, annotation?.id]);
 
@@ -81,7 +86,9 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
                 <div className="flex items-center gap-2">
                   <Slider
                     value={[annotation.blurAmount]}
-                    onValueChange={([value]) => updateAnnotation({ blurAmount: value })}
+                    onValueChange={([value]) =>
+                      updateAnnotation({ blurAmount: value })
+                    }
                     min={1}
                     max={50}
                     step={1}
@@ -89,7 +96,11 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
                   <input
                     type="text"
                     value={annotation.blurAmount}
-                    onChange={(e) => updateAnnotation({ blurAmount: Number(e.target.value) || 20 })}
+                    onChange={(e) =>
+                      updateAnnotation({
+                        blurAmount: Number(e.target.value) || 20,
+                      })
+                    }
                     onKeyDown={stopPropagation}
                     className="w-14 px-1.5 py-1 bg-secondary border border-border rounded text-xs text-card-foreground"
                   />
@@ -133,7 +144,9 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
                 <div className="flex items-center gap-2">
                   <Slider
                     value={[annotation.fontSize]}
-                    onValueChange={([value]) => updateAnnotation({ fontSize: value })}
+                    onValueChange={([value]) =>
+                      updateAnnotation({ fontSize: value })
+                    }
                     min={8}
                     max={200}
                     step={1}
@@ -144,12 +157,19 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === "" || /^\d*$/.test(val)) {
-                        updateAnnotation({ fontSize: val as unknown as number });
+                        updateAnnotation({
+                          fontSize: val as unknown as number,
+                        });
                       }
                     }}
                     onBlur={(e) => {
                       const val = Number(e.target.value);
-                      updateAnnotation({ fontSize: Math.max(8, Math.min(200, isNaN(val) ? 24 : val)) });
+                      updateAnnotation({
+                        fontSize: Math.max(
+                          8,
+                          Math.min(200, isNaN(val) ? 24 : val),
+                        ),
+                      });
                     }}
                     onKeyDown={stopPropagation}
                     className="w-14 px-1.5 py-1 bg-secondary border border-border rounded text-xs text-card-foreground"
@@ -182,7 +202,11 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
                   value={annotation.lineType}
                   onChange={(e) => {
                     const newLineType = e.target.value as LineType;
-                    if (newLineType === "curved" && (annotation.type === "line" || annotation.type === "arrow")) {
+                    if (
+                      newLineType === "curved" &&
+                      (annotation.type === "line" ||
+                        annotation.type === "arrow")
+                    ) {
                       const midX = (annotation.x + annotation.endX) / 2;
                       const midY = (annotation.y + annotation.endY) / 2;
                       const dx = annotation.endX - annotation.x;
@@ -195,9 +219,9 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
                         x: midX + (perpX / length) * offset,
                         y: midY + (perpY / length) * offset,
                       };
-                      updateAnnotation({ 
+                      updateAnnotation({
                         lineType: newLineType,
-                        controlPoints: [controlPoint]
+                        controlPoints: [controlPoint],
                       });
                     } else {
                       updateAnnotation({ lineType: newLineType });
@@ -211,10 +235,16 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
               </div>
               {annotation.type === "arrow" && (
                 <div>
-                  <div className="text-xs text-foreground0 mb-1.5">Arrow Head</div>
+                  <div className="text-xs text-foreground0 mb-1.5">
+                    Arrow Head
+                  </div>
                   <select
                     value={annotation.arrowType}
-                    onChange={(e) => updateAnnotation({ arrowType: e.target.value as ArrowType })}
+                    onChange={(e) =>
+                      updateAnnotation({
+                        arrowType: e.target.value as ArrowType,
+                      })
+                    }
                     className="w-full px-2 py-1 bg-secondary border border-border rounded text-xs text-card-foreground"
                   >
                     <option value="thick">Large</option>
@@ -245,33 +275,35 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
             <div className="space-y-2 pl-2">
               <div>
                 <div className="text-xs text-foreground0 mb-1.5">Value</div>
-                  <input
-                    type="number"
-                    value={annotation.number}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "" || val === "-") {
-                        updateAnnotation({ number: val as unknown as number });
-                      } else {
-                        updateAnnotation({ number: Number(val) || 1 });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (e.target.value === "" || e.target.value === "-") {
-                        updateAnnotation({ number: 1 });
-                      }
-                    }}
-                    onKeyDown={stopPropagation}
-                    className="w-full px-2 py-1 bg-secondary border border-border rounded text-xs text-card-foreground"
-                    min={1}
-                  />
+                <input
+                  type="number"
+                  value={annotation.number}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || val === "-") {
+                      updateAnnotation({ number: val as unknown as number });
+                    } else {
+                      updateAnnotation({ number: Number(val) || 1 });
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === "" || e.target.value === "-") {
+                      updateAnnotation({ number: 1 });
+                    }
+                  }}
+                  onKeyDown={stopPropagation}
+                  className="w-full px-2 py-1 bg-secondary border border-border rounded text-xs text-card-foreground"
+                  min={1}
+                />
               </div>
               <div>
                 <div className="text-xs text-foreground0 mb-1.5">Size</div>
                 <div className="flex items-center gap-2">
                   <Slider
                     value={[annotation.radius]}
-                    onValueChange={([value]) => updateAnnotation({ radius: value })}
+                    onValueChange={([value]) =>
+                      updateAnnotation({ radius: value })
+                    }
                     min={10}
                     max={50}
                     step={1}
@@ -325,13 +357,21 @@ export const PropertiesPanel = memo(function PropertiesPanel({ annotation, onUpd
                   <input
                     type="color"
                     value={annotation.fill.hex}
-                    onChange={(e) => updateAnnotation({ fill: { ...annotation.fill, hex: e.target.value } })}
+                    onChange={(e) =>
+                      updateAnnotation({
+                        fill: { ...annotation.fill, hex: e.target.value },
+                      })
+                    }
                     className="size-7 rounded border border-border cursor-pointer"
                   />
                   <input
                     type="text"
                     value={annotation.fill.hex.toUpperCase()}
-                    onChange={(e) => updateAnnotation({ fill: { ...annotation.fill, hex: e.target.value } })}
+                    onChange={(e) =>
+                      updateAnnotation({
+                        fill: { ...annotation.fill, hex: e.target.value },
+                      })
+                    }
                     onKeyDown={stopPropagation}
                     className="flex-1 px-2 py-1 bg-secondary border border-border rounded text-xs text-card-foreground"
                   />

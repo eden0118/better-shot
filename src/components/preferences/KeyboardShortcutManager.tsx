@@ -18,8 +18,18 @@ interface KeyboardShortcutManagerProps {
 }
 
 const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
-  { id: "fullscreen", action: "Capture Screen", shortcut: "CommandOrControl+Shift+F", enabled: true },
-  { id: "window", action: "Capture Window", shortcut: "CommandOrControl+Shift+D", enabled: false },
+  {
+    id: "fullscreen",
+    action: "Capture Screen",
+    shortcut: "CommandOrControl+Shift+F",
+    enabled: true,
+  },
+  {
+    id: "window",
+    action: "Capture Window",
+    shortcut: "CommandOrControl+Shift+D",
+    enabled: false,
+  },
 ];
 
 function formatShortcut(shortcut: string): string {
@@ -81,8 +91,11 @@ function keyEventToShortcut(e: KeyboardEvent): string | null {
   return parts.join("+");
 }
 
-export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutManagerProps) {
-  const [shortcuts, setShortcuts] = useState<KeyboardShortcut[]>(DEFAULT_SHORTCUTS);
+export function KeyboardShortcutManager({
+  onShortcutsChange,
+}: KeyboardShortcutManagerProps) {
+  const [shortcuts, setShortcuts] =
+    useState<KeyboardShortcut[]>(DEFAULT_SHORTCUTS);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [recordedShortcut, setRecordedShortcut] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -97,7 +110,9 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
           // Merge saved shortcuts with defaults, preserving all saved values
           // Only add missing default shortcuts that don't exist in saved
           const savedIds = new Set(saved.map((s) => s.id));
-          const missingDefaults = DEFAULT_SHORTCUTS.filter((d) => !savedIds.has(d.id));
+          const missingDefaults = DEFAULT_SHORTCUTS.filter(
+            (d) => !savedIds.has(d.id),
+          );
           const mergedShortcuts = [...saved, ...missingDefaults];
           setShortcuts(mergedShortcuts);
         } else {
@@ -140,7 +155,7 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
       // Only save when we have a recorded shortcut and user releases a key
       if (recordedShortcut && editingId) {
         const newShortcuts = shortcuts.map((s) =>
-          s.id === editingId ? { ...s, shortcut: recordedShortcut } : s
+          s.id === editingId ? { ...s, shortcut: recordedShortcut } : s,
         );
         setShortcuts(newShortcuts);
 
@@ -170,17 +185,20 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
     };
   }, [isRecording, editingId, recordedShortcut, shortcuts, onShortcutsChange]);
 
-  const saveShortcuts = useCallback(async (newShortcuts: KeyboardShortcut[]) => {
-    try {
-      const store = await Store.load("settings.json");
-      await store.set("keyboardShortcuts", newShortcuts);
-      await store.save();
-      onShortcutsChange?.(newShortcuts);
-    } catch (err) {
-      console.error("Failed to save shortcuts:", err);
-      toast.error("Failed to save shortcuts");
-    }
-  }, [onShortcutsChange]);
+  const saveShortcuts = useCallback(
+    async (newShortcuts: KeyboardShortcut[]) => {
+      try {
+        const store = await Store.load("settings.json");
+        await store.set("keyboardShortcuts", newShortcuts);
+        await store.save();
+        onShortcutsChange?.(newShortcuts);
+      } catch (err) {
+        console.error("Failed to save shortcuts:", err);
+        toast.error("Failed to save shortcuts");
+      }
+    },
+    [onShortcutsChange],
+  );
 
   const handleStartRecording = useCallback((shortcut: KeyboardShortcut) => {
     setEditingId(shortcut.id);
@@ -196,20 +214,26 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
     setRecordedShortcut(null);
   }, []);
 
-  const handleToggle = useCallback(async (id: string) => {
-    const newShortcuts = shortcuts.map((s) =>
-      s.id === id ? { ...s, enabled: !s.enabled } : s
-    );
-    setShortcuts(newShortcuts);
-    await saveShortcuts(newShortcuts);
-  }, [shortcuts, saveShortcuts]);
+  const handleToggle = useCallback(
+    async (id: string) => {
+      const newShortcuts = shortcuts.map((s) =>
+        s.id === id ? { ...s, enabled: !s.enabled } : s,
+      );
+      setShortcuts(newShortcuts);
+      await saveShortcuts(newShortcuts);
+    },
+    [shortcuts, saveShortcuts],
+  );
 
-  const handleDelete = useCallback(async (id: string) => {
-    const newShortcuts = shortcuts.filter((s) => s.id !== id);
-    setShortcuts(newShortcuts);
-    await saveShortcuts(newShortcuts);
-    toast.success("Shortcut removed");
-  }, [shortcuts, saveShortcuts]);
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const newShortcuts = shortcuts.filter((s) => s.id !== id);
+      setShortcuts(newShortcuts);
+      await saveShortcuts(newShortcuts);
+      toast.success("Shortcut removed");
+    },
+    [shortcuts, saveShortcuts],
+  );
 
   const handleAdd = useCallback(() => {
     const newId = `custom-${Date.now()}`;
@@ -229,13 +253,10 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-foreground">Keyboard Shortcuts</label>
-        <Button
-          type="button"
-          variant="cta"
-          size="lg"
-          onClick={handleAdd}
-        >
+        <label className="text-sm font-medium text-foreground">
+          Keyboard Shortcuts
+        </label>
+        <Button type="button" variant="cta" size="lg" onClick={handleAdd}>
           <Plus className="size-3 mr-1" aria-hidden="true" />
           Add
         </Button>
@@ -254,7 +275,9 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
                         className="flex-1 px-2 py-1 bg-card border-2 border-blue-500 rounded text-card-foreground text-sm focus:outline-none animate-pulse text-left"
                         autoFocus
                       >
-                        {recordedShortcut ? formatShortcut(recordedShortcut) : "Press shortcut..."}
+                        {recordedShortcut
+                          ? formatShortcut(recordedShortcut)
+                          : "Press shortcut..."}
                       </button>
                       <Button
                         variant="cta"
@@ -266,7 +289,9 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <span className="text-sm text-foreground flex-1">{shortcut.action}</span>
+                      <span className="text-sm text-foreground flex-1">
+                        {shortcut.action}
+                      </span>
                       <button
                         onClick={() => handleStartRecording(shortcut)}
                         className="px-2 py-1 bg-card border border-border rounded text-foreground font-mono text-xs tabular-nums hover:bg-secondary hover:border-ring transition-colors"
@@ -286,7 +311,7 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
                       "text-xs",
                       shortcut.enabled
                         ? "text-green-400 hover:text-green-300"
-                        : "text-foreground0 hover:text-muted-foreground"
+                        : "text-foreground0 hover:text-muted-foreground",
                     )}
                   >
                     {shortcut.enabled ? "Enabled" : "Disabled"}

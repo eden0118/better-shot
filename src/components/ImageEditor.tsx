@@ -24,8 +24,16 @@ import { toast } from "sonner";
 import { Copy, ImageDown, Loader2, Redo2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BackgroundSelector, gradientOptions } from "./editor/BackgroundSelector";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  BackgroundSelector,
+  gradientOptions,
+} from "./editor/BackgroundSelector";
 import { AssetGrid } from "./editor/AssetGrid";
 import { EffectsPanel } from "./editor/EffectsPanel";
 import { ImageRoundnessControl } from "./editor/ImageRoundnessControl";
@@ -51,7 +59,13 @@ interface ImageEditorProps {
   onPresetApplied?: () => void;
 }
 
-export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetApplied }: ImageEditorProps) {
+export function ImageEditor({
+  imagePath,
+  onSave,
+  onCancel,
+  presetSize,
+  onPresetApplied,
+}: ImageEditorProps) {
   // Use Zustand store with selectors for optimized re-renders
   const settings = useSettings();
   const annotations = useAnnotations();
@@ -61,7 +75,8 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
   const actions = editorActions;
 
   // Screenshot image state
-  const [screenshotImage, setScreenshotImage] = useState<HTMLImageElement | null>(null);
+  const [screenshotImage, setScreenshotImage] =
+    useState<HTMLImageElement | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -70,14 +85,19 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
   const [isCopying, setIsCopying] = useState(false);
   const [tempDir, setTempDir] = useState<string>("/private/tmp");
 
-   // Annotation UI state (not part of undo/redo)
+  // Annotation UI state (not part of undo/redo)
   const [selectedTool, setSelectedTool] = useState<ToolType>("select");
-  const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null);
+  const [selectedAnnotation, setSelectedAnnotation] =
+    useState<Annotation | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Preview generator hook
-  const { previewUrl, error: previewError, renderHighQualityCanvas } = usePreviewGenerator({
+  const {
+    previewUrl,
+    error: previewError,
+    renderHighQualityCanvas,
+  } = usePreviewGenerator({
     screenshotImage,
     settings,
     canvasRef,
@@ -168,7 +188,10 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
 
     setIsSaving(true);
     try {
-      const highQualityCanvas = await renderHighQualityCanvas(annotations, imagePath);
+      const highQualityCanvas = await renderHighQualityCanvas(
+        annotations,
+        imagePath,
+      );
 
       if (!highQualityCanvas) {
         setIsSaving(false);
@@ -193,13 +216,23 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
           }
         },
         "image/png",
-        1.0
+        1.0,
       );
     } catch (err) {
-      setLoadError(`Failed to save: ${err instanceof Error ? err.message : String(err)}`);
+      setLoadError(
+        `Failed to save: ${err instanceof Error ? err.message : String(err)}`,
+      );
       setIsSaving(false);
     }
-  }, [screenshotImage, annotations, renderHighQualityCanvas, onSave, isSaving, isCopying, imagePath]);
+  }, [
+    screenshotImage,
+    annotations,
+    renderHighQualityCanvas,
+    onSave,
+    isSaving,
+    isCopying,
+    imagePath,
+  ]);
 
   // Copy handler
   const handleCopy = useCallback(async () => {
@@ -207,7 +240,10 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
 
     setIsCopying(true);
     try {
-      const highQualityCanvas = await renderHighQualityCanvas(annotations, imagePath);
+      const highQualityCanvas = await renderHighQualityCanvas(
+        annotations,
+        imagePath,
+      );
 
       if (!highQualityCanvas) {
         setIsCopying(false);
@@ -235,31 +271,51 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
     } finally {
       setIsCopying(false);
     }
-  }, [screenshotImage, annotations, renderHighQualityCanvas, isSaving, isCopying, tempDir, imagePath]);
+  }, [
+    screenshotImage,
+    annotations,
+    renderHighQualityCanvas,
+    isSaving,
+    isCopying,
+    tempDir,
+    imagePath,
+  ]);
 
   // Annotation handlers
-  const handleAnnotationAdd = useCallback((annotation: Annotation) => {
-    actions.addAnnotation(annotation);
-    setSelectedAnnotation(annotation);
-    if (annotation.type !== "number") {
-      setSelectedTool("select");
-    }
-  }, [actions]);
+  const handleAnnotationAdd = useCallback(
+    (annotation: Annotation) => {
+      actions.addAnnotation(annotation);
+      setSelectedAnnotation(annotation);
+      if (annotation.type !== "number") {
+        setSelectedTool("select");
+      }
+    },
+    [actions],
+  );
 
-  const handleAnnotationUpdateTransient = useCallback((annotation: Annotation) => {
-    actions.updateAnnotationTransient(annotation);
-    setSelectedAnnotation(annotation);
-  }, [actions]);
+  const handleAnnotationUpdateTransient = useCallback(
+    (annotation: Annotation) => {
+      actions.updateAnnotationTransient(annotation);
+      setSelectedAnnotation(annotation);
+    },
+    [actions],
+  );
 
-  const handleAnnotationUpdate = useCallback((annotation: Annotation) => {
-    actions.updateAnnotation(annotation);
-    setSelectedAnnotation(annotation);
-  }, [actions]);
+  const handleAnnotationUpdate = useCallback(
+    (annotation: Annotation) => {
+      actions.updateAnnotation(annotation);
+      setSelectedAnnotation(annotation);
+    },
+    [actions],
+  );
 
-  const handleAnnotationDelete = useCallback((id: string) => {
-    actions.deleteAnnotation(id);
-    setSelectedAnnotation((prev) => prev?.id === id ? null : prev);
-  }, [actions]);
+  const handleAnnotationDelete = useCallback(
+    (id: string) => {
+      actions.deleteAnnotation(id);
+      setSelectedAnnotation((prev) => (prev?.id === id ? null : prev));
+    },
+    [actions],
+  );
 
   const handleDeleteSelected = useCallback(() => {
     if (selectedAnnotation) {
@@ -291,7 +347,10 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
   // Delete annotation with keyboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
@@ -310,7 +369,10 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Skip if typing in input fields
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
@@ -334,7 +396,10 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
         handleUndo();
       }
       // Redo: Cmd+Shift+Z or Cmd+Y
-      if ((e.metaKey || e.ctrlKey) && ((e.key === "z" && e.shiftKey) || e.key === "y")) {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        ((e.key === "z" && e.shiftKey) || e.key === "y")
+      ) {
         e.preventDefault();
         handleRedo();
       }
@@ -346,10 +411,21 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [imageLoaded, isSaving, isCopying, handleSave, handleCopy, handleUndo, handleRedo, onCancel]);
+  }, [
+    imageLoaded,
+    isSaving,
+    isCopying,
+    handleSave,
+    handleCopy,
+    handleUndo,
+    handleRedo,
+    onCancel,
+  ]);
 
   // Find selected gradient for BackgroundSelector
-  const selectedGradientOption = gradientOptions.find(g => g.id === settings.gradientId) || gradientOptions[0];
+  const selectedGradientOption =
+    gradientOptions.find((g) => g.id === settings.gradientId) ||
+    gradientOptions[0];
 
   return (
     <div className="flex flex-col h-dvh bg-background text-foreground">
@@ -357,7 +433,8 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
       {presetSize && (
         <div className="px-6 py-3 bg-blue-950/40 border-b border-blue-800/50 flex items-center justify-between">
           <div className="text-sm text-blue-200">
-            <span className="font-medium">Preset Size Active:</span> {presetSize.name} ({presetSize.width} × {presetSize.height} px)
+            <span className="font-medium">Preset Size Active:</span>{" "}
+            {presetSize.name} ({presetSize.width} × {presetSize.height} px)
           </div>
           <Button
             size="sm"
@@ -372,7 +449,9 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
 
       <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-semibold text-foreground text-balance">Edit Screenshot</h2>
+          <h2 className="text-xl font-semibold text-foreground text-balance">
+            Edit Screenshot
+          </h2>
           <TooltipProvider>
             <div className="flex gap-1">
               <Tooltip>
@@ -389,7 +468,9 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Undo <kbd className="ml-1 text-xs opacity-70">⌘Z</kbd></p>
+                  <p>
+                    Undo <kbd className="ml-1 text-xs opacity-70">⌘Z</kbd>
+                  </p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
@@ -406,17 +487,16 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Redo <kbd className="ml-1 text-xs opacity-70">⌘⇧Z</kbd></p>
+                  <p>
+                    Redo <kbd className="ml-1 text-xs opacity-70">⌘⇧Z</kbd>
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </div>
           </TooltipProvider>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="cta"
-            onClick={onCancel}
-          >
+          <Button variant="cta" onClick={onCancel}>
             Cancel
           </Button>
           <TooltipProvider>
@@ -429,7 +509,10 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
                   className="disabled:opacity-50"
                 >
                   {isCopying ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    <Loader2
+                      className="size-4 animate-spin"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <Copy className="size-4" aria-hidden="true" />
                   )}
@@ -449,7 +532,10 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
                   className="disabled:opacity-50"
                 >
                   {isSaving ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    <Loader2
+                      className="size-4 animate-spin"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <ImageDown className="size-4" aria-hidden="true" />
                   )}
@@ -473,12 +559,23 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
       <div className="flex flex-1 overflow-hidden">
         <div className="w-72 shrink-0 border-r border-border bg-card flex flex-col overflow-hidden">
           <div className="shrink-0 border-b border-border">
-            <PropertiesPanel annotation={selectedAnnotation} onUpdate={handleAnnotationUpdate} />
+            <PropertiesPanel
+              annotation={selectedAnnotation}
+              onUpdate={handleAnnotationUpdate}
+            />
           </div>
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <div className="p-4 space-y-4">
               <BackgroundSelector
-                backgroundType={settings.backgroundType as "transparent" | "white" | "black" | "gray" | "gradient" | "custom"}
+                backgroundType={
+                  settings.backgroundType as
+                    | "transparent"
+                    | "white"
+                    | "black"
+                    | "gray"
+                    | "gradient"
+                    | "custom"
+                }
                 customColor={settings.customColor}
                 selectedGradient={selectedGradientOption.id}
                 onBackgroundTypeChange={actions.setBackgroundType}
@@ -504,14 +601,22 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
                 onBlurAmountChangeTransient={actions.setBlurAmountTransient}
                 onNoiseChangeTransient={actions.setNoiseAmountTransient}
                 onPaddingTopChangeTransient={actions.setPaddingTopTransient}
-                onPaddingBottomChangeTransient={actions.setPaddingBottomTransient}
+                onPaddingBottomChangeTransient={
+                  actions.setPaddingBottomTransient
+                }
                 onPaddingLeftChangeTransient={actions.setPaddingLeftTransient}
                 onPaddingRightChangeTransient={actions.setPaddingRightTransient}
                 onAllPaddingChangeTransient={actions.setAllPaddingTransient}
                 onShadowBlurChangeTransient={actions.setShadowBlurTransient}
-                onShadowOffsetXChangeTransient={actions.setShadowOffsetXTransient}
-                onShadowOffsetYChangeTransient={actions.setShadowOffsetYTransient}
-                onShadowOpacityChangeTransient={actions.setShadowOpacityTransient}
+                onShadowOffsetXChangeTransient={
+                  actions.setShadowOffsetXTransient
+                }
+                onShadowOffsetYChangeTransient={
+                  actions.setShadowOffsetYTransient
+                }
+                onShadowOpacityChangeTransient={
+                  actions.setShadowOpacityTransient
+                }
                 onBlurAmountChange={actions.setBlurAmount}
                 onNoiseChange={actions.setNoiseAmount}
                 onPaddingTopChange={actions.setPaddingTop}
@@ -537,10 +642,14 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
                 <Card className="bg-red-950/30 border-red-800/50">
                   <CardContent className="pt-6">
                     <div className="text-sm text-red-400 text-pretty">
-                      <strong className="block mb-1 text-red-300">Error:</strong>
+                      <strong className="block mb-1 text-red-300">
+                        Error:
+                      </strong>
                       {error}
                       <br />
-                      <small className="text-foreground0 break-all mt-2 block text-pretty">Path: {imagePath}</small>
+                      <small className="text-foreground0 break-all mt-2 block text-pretty">
+                        Path: {imagePath}
+                      </small>
                     </div>
                   </CardContent>
                 </Card>
@@ -565,14 +674,22 @@ export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetA
                 onAnnotationDelete={handleAnnotationDelete}
               />
             ) : imageLoaded ? (
-              <div className="text-muted-foreground text-base text-pretty">Generating preview...</div>
+              <div className="text-muted-foreground text-base text-pretty">
+                Generating preview...
+              </div>
             ) : error ? (
               <div className="text-center text-red-400 p-5">
-                <p className="mb-2 text-base font-medium text-balance">Could not load image</p>
-                <small className="text-foreground0 text-xs text-pretty">{error}</small>
+                <p className="mb-2 text-base font-medium text-balance">
+                  Could not load image
+                </p>
+                <small className="text-foreground0 text-xs text-pretty">
+                  {error}
+                </small>
               </div>
             ) : (
-              <div className="text-muted-foreground text-base text-pretty">Loading image...</div>
+              <div className="text-muted-foreground text-base text-pretty">
+                Loading image...
+              </div>
             )}
             <canvas ref={canvasRef} style={{ display: "none" }} />
           </div>

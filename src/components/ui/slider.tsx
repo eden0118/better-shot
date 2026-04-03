@@ -1,8 +1,10 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface SliderProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> {
+export interface SliderProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange"
+> {
   value?: number[];
   /** Called on every change during drag - use for visual feedback */
   onValueChange?: (value: number[]) => void;
@@ -11,11 +13,23 @@ export interface SliderProps
 }
 
 const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
-  ({ className, value = [0], onValueChange, onValueCommit, min = 0, max = 100, step = 1, ...props }, ref) => {
+  (
+    {
+      className,
+      value = [0],
+      onValueChange,
+      onValueCommit,
+      min = 0,
+      max = 100,
+      step = 1,
+      ...props
+    },
+    ref,
+  ) => {
     // Track the value during drag for commit
     const valueRef = React.useRef(value[0]);
     const isDraggingRef = React.useRef(false);
-    
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = Number(e.target.value);
       valueRef.current = newValue;
@@ -35,7 +49,16 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
 
     // Handle keyboard changes - commit immediately
     const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) {
+      if (
+        [
+          "ArrowLeft",
+          "ArrowRight",
+          "ArrowUp",
+          "ArrowDown",
+          "Home",
+          "End",
+        ].includes(e.key)
+      ) {
         onValueCommit?.([valueRef.current]);
       }
     };
@@ -58,7 +81,7 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
             "w-full h-1.5 bg-muted rounded-full appearance-none cursor-pointer",
             "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:border-0",
             "[&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-sm [&::-moz-range-thumb]:border-0",
-            className
+            className,
           )}
           style={{
             background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${percentage}%, var(--color-muted) ${percentage}%, var(--color-muted) 100%)`,
@@ -77,7 +100,7 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
         />
       </div>
     );
-  }
+  },
 );
 Slider.displayName = "Slider";
 

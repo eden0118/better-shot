@@ -41,7 +41,7 @@ export function QuickOverlay() {
   const [imageError, setImageError] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [copied, setCopied] = useState(false);
-   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   useEffect(() => {
     const loadInitialState = async () => {
@@ -122,11 +122,9 @@ export function QuickOverlay() {
 
     const hideTimer = window.setTimeout(() => {
       const win = getCurrentWindow();
-      win
-        .hide()
-        .catch((error) => {
-          console.error("Failed to hide quick overlay window:", error);
-        });
+      win.hide().catch((error) => {
+        console.error("Failed to hide quick overlay window:", error);
+      });
     }, fadeDelayMs + fadeDurationMs);
 
     return () => {
@@ -145,7 +143,9 @@ export function QuickOverlay() {
       setTimeout(() => setCopied(false), 700);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : String(error ?? "Unknown error");
+        error instanceof Error
+          ? error.message
+          : String(error ?? "Unknown error");
       toast.error("Failed to copy", {
         description: message,
       });
@@ -227,4 +227,3 @@ export function QuickOverlay() {
     </main>
   );
 }
-

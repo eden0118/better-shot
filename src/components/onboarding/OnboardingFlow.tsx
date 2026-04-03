@@ -30,7 +30,12 @@ const ONBOARDING_STEPS = [
     description:
       "Your open-source alternative to CleanShot X. Let's get you started with a quick tour of the app.",
     icon: (
-      <svg className="size-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg
+        className="size-8 text-blue-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -43,9 +48,15 @@ const ONBOARDING_STEPS = [
   {
     id: "capture-modes",
     title: "Capture Modes",
-    description: "Better Shot offers two ways to capture your screen, each with a handy keyboard shortcut.",
+    description:
+      "Better Shot offers two ways to capture your screen, each with a handy keyboard shortcut.",
     icon: (
-      <svg className="size-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg
+        className="size-8 text-blue-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -65,7 +76,12 @@ const ONBOARDING_STEPS = [
         <div className="grid grid-cols-2 gap-3">
           <div className="p-4 bg-secondary rounded-lg border border-border">
             <div className="flex flex-col items-center gap-2">
-              <svg className="size-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="size-6 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -74,14 +90,23 @@ const ONBOARDING_STEPS = [
                 />
               </svg>
               <div className="text-center">
-                <div className="text-sm font-medium text-foreground">Fullscreen</div>
-                <div className="text-xs text-foreground0 mt-1">Entire screen · ⌘⇧F</div>
+                <div className="text-sm font-medium text-foreground">
+                  Fullscreen
+                </div>
+                <div className="text-xs text-foreground0 mt-1">
+                  Entire screen · ⌘⇧F
+                </div>
               </div>
             </div>
           </div>
           <div className="p-4 bg-secondary rounded-lg border border-border">
             <div className="flex flex-col items-center gap-2">
-              <svg className="size-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="size-6 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -96,8 +121,12 @@ const ONBOARDING_STEPS = [
                 />
               </svg>
               <div className="text-center">
-                <div className="text-sm font-medium text-foreground">Window</div>
-                <div className="text-xs text-foreground0 mt-1">Single window · ⌘⇧D</div>
+                <div className="text-sm font-medium text-foreground">
+                  Window
+                </div>
+                <div className="text-xs text-foreground0 mt-1">
+                  Single window · ⌘⇧D
+                </div>
               </div>
             </div>
           </div>
@@ -125,9 +154,15 @@ const ONBOARDING_STEPS = [
   {
     id: "editor",
     title: "Image Editor",
-    description: "Edit your screenshots with backgrounds, effects, and annotations.",
+    description:
+      "Edit your screenshots with backgrounds, effects, and annotations.",
     icon: (
-      <svg className="size-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg
+        className="size-8 text-blue-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -139,15 +174,21 @@ const ONBOARDING_STEPS = [
     content: (
       <div className="space-y-4">
         <div className="p-4 bg-secondary rounded-lg border border-border">
-          <div className="text-sm font-medium text-foreground mb-1">Image Editing</div>
+          <div className="text-sm font-medium text-foreground mb-1">
+            Image Editing
+          </div>
           <p className="text-xs text-muted-foreground text-pretty">
-            Add backgrounds, gradients, blur effects, shadows, and adjust border radius to make your screenshots stand out.
+            Add backgrounds, gradients, blur effects, shadows, and adjust border
+            radius to make your screenshots stand out.
           </p>
         </div>
         <div className="p-4 bg-secondary rounded-lg border border-border">
-          <div className="text-sm font-medium text-foreground mb-1">Annotation Tools</div>
+          <div className="text-sm font-medium text-foreground mb-1">
+            Annotation Tools
+          </div>
           <p className="text-xs text-muted-foreground text-pretty">
-            Add shapes, arrows, text, and numbered labels. Customize colors, opacity, borders, and alignment.
+            Add shapes, arrows, text, and numbered labels. Customize colors,
+            opacity, borders, and alignment.
           </p>
         </div>
       </div>
@@ -156,9 +197,15 @@ const ONBOARDING_STEPS = [
   {
     id: "settings",
     title: "Settings & Preferences",
-    description: "Fine-tune how captures behave. Access these options anytime from the gear icon.",
+    description:
+      "Fine-tune how captures behave. Access these options anytime from the gear icon.",
     icon: (
-      <svg className="size-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg
+        className="size-8 text-blue-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -176,19 +223,26 @@ const ONBOARDING_STEPS = [
     content: (
       <div className="space-y-4">
         <div className="p-4 bg-secondary rounded-lg border border-border">
-          <div className="text-sm font-medium text-foreground mb-1">Default background</div>
+          <div className="text-sm font-medium text-foreground mb-1">
+            Default background
+          </div>
           <p className="text-xs text-muted-foreground text-pretty">
-            Choose the image Better Shot uses as the starting point in the editor.
+            Choose the image Better Shot uses as the starting point in the
+            editor.
           </p>
         </div>
         <div className="p-4 bg-secondary rounded-lg border border-border">
-          <div className="text-sm font-medium text-foreground mb-1">Save location</div>
+          <div className="text-sm font-medium text-foreground mb-1">
+            Save location
+          </div>
           <p className="text-xs text-muted-foreground text-pretty">
             Pick where screenshots are saved. Desktop is the default.
           </p>
         </div>
         <div className="p-4 bg-secondary rounded-lg border border-border">
-          <div className="text-sm font-medium text-foreground mb-1">Copy to clipboard</div>
+          <div className="text-sm font-medium text-foreground mb-1">
+            Copy to clipboard
+          </div>
           <p className="text-xs text-muted-foreground text-pretty">
             Automatically copy saved screenshots so they are ready to paste.
           </p>
@@ -202,7 +256,12 @@ const ONBOARDING_STEPS = [
     description:
       "Better Shot needs Screen Recording permission from macOS before it can capture your screen.",
     icon: (
-      <svg className="size-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg
+        className="size-8 text-amber-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -229,30 +288,46 @@ const ONBOARDING_STEPS = [
               />
             </svg>
             <div className="flex-1 space-y-1">
-              <div className="text-sm font-medium text-amber-200">Required by macOS</div>
+              <div className="text-sm font-medium text-amber-200">
+                Required by macOS
+              </div>
               <ul className="text-xs text-amber-300/80 space-y-1 text-pretty list-disc list-inside">
-                <li>macOS will ask for Screen Recording the first time you capture.</li>
-                <li>Better Shot cannot capture anything until this is granted.</li>
+                <li>
+                  macOS will ask for Screen Recording the first time you
+                  capture.
+                </li>
+                <li>
+                  Better Shot cannot capture anything until this is granted.
+                </li>
               </ul>
             </div>
           </div>
         </div>
         <div className="space-y-3">
           <div className="p-4 bg-secondary rounded-lg border border-border">
-            <div className="text-sm font-medium text-foreground mb-2">How to Grant Permission</div>
+            <div className="text-sm font-medium text-foreground mb-2">
+              How to Grant Permission
+            </div>
             <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside text-pretty">
               <li>Click “Open System Settings” in the macOS prompt.</li>
               <li>Go to Privacy &amp; Security → Screen Recording.</li>
-              <li>Toggle on <span className="text-foreground font-mono">bettershot</span> in the list.</li>
+              <li>
+                Toggle on{" "}
+                <span className="text-foreground font-mono">bettershot</span> in
+                the list.
+              </li>
               <li>Restart Better Shot so the change takes effect.</li>
             </ol>
           </div>
           <div className="p-4 bg-secondary rounded-lg border border-border">
-            <div className="text-sm font-medium text-foreground mb-2">What You'll See</div>
+            <div className="text-sm font-medium text-foreground mb-2">
+              What You'll See
+            </div>
             <p className="text-xs text-muted-foreground text-pretty">
               macOS shows a dialog like{" "}
               <span className="text-foreground font-mono">
-                "bettershot" would like to record this computer&apos;s screen and audio.
+                "bettershot" would like to record this computer&apos;s screen
+                and audio.
               </span>{" "}
               Click “Open System Settings” to grant access.
             </p>
@@ -264,9 +339,15 @@ const ONBOARDING_STEPS = [
   {
     id: "ready",
     title: "You're All Set!",
-    description: "Start capturing screenshots and editing them with beautiful backgrounds and effects.",
+    description:
+      "Start capturing screenshots and editing them with beautiful backgrounds and effects.",
     icon: (
-      <svg className="size-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg
+        className="size-8 text-green-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -278,7 +359,15 @@ const ONBOARDING_STEPS = [
     content: (
       <div className="space-y-4 text-center">
         <p className="text-sm text-muted-foreground text-pretty">
-          Press <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘⇧F</kbd> for fullscreen or <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘⇧D</kbd> for a window, or use the buttons on the main screen.
+          Press{" "}
+          <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
+            ⌘⇧F
+          </kbd>{" "}
+          for fullscreen or{" "}
+          <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
+            ⌘⇧D
+          </kbd>{" "}
+          for a window, or use the buttons on the main screen.
         </p>
       </div>
     ),
@@ -315,7 +404,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-8">
       <div className="w-full max-w-2xl">
-        <OnboardingProgress currentStep={currentStep + 1} totalSteps={ONBOARDING_STEPS.length} />
+        <OnboardingProgress
+          currentStep={currentStep + 1}
+          totalSteps={ONBOARDING_STEPS.length}
+        />
         <Card className="bg-card border-border">
           <CardContent className="p-8">
             <OnboardingStep
@@ -344,11 +436,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 >
                   Skip
                 </Button>
-                <Button
-                  onClick={handleNext}
-                  variant="cta"
-                  size="lg"
-                >
+                <Button onClick={handleNext} variant="cta" size="lg">
                   {isLastStep ? "Get Started" : "Next"}
                 </Button>
               </div>

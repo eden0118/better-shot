@@ -18,7 +18,13 @@ import mesh15 from "@/assets/mesh/mesh15.webp";
 import mesh16 from "@/assets/mesh/mesh16.webp";
 import mesh17 from "@/assets/mesh/mesh17.webp";
 
-type BackgroundType = "transparent" | "white" | "black" | "gray" | "gradient" | "custom";
+type BackgroundType =
+  | "transparent"
+  | "white"
+  | "black"
+  | "gray"
+  | "gradient"
+  | "custom";
 
 interface GradientOption {
   id: string;
@@ -37,14 +43,54 @@ const gradientOptions: GradientOption[] = [
   { id: "mesh-7", name: "Mesh 7", src: mesh7, colors: ["#ffecd2", "#fcb69f"] },
   { id: "mesh-8", name: "Mesh 8", src: mesh8, colors: ["#0f0c29", "#24243e"] },
   { id: "mesh-9", name: "Mesh 9", src: mesh9, colors: ["#1a1f2b", "#3f4c6b"] },
-  { id: "mesh-10", name: "Mesh 10", src: mesh10, colors: ["#0d324d", "#7f5a83"] },
-  { id: "mesh-11", name: "Mesh 11", src: mesh11, colors: ["#2c3e50", "#4ca1af"] },
-  { id: "mesh-12", name: "Mesh 12", src: mesh12, colors: ["#1d2b64", "#f8cdda"] },
-  { id: "mesh-13", name: "Mesh 13", src: mesh13, colors: ["#42275a", "#734b6d"] },
-  { id: "mesh-14", name: "Mesh 14", src: mesh14, colors: ["#16222a", "#3a6073"] },
-  { id: "mesh-15", name: "Mesh 15", src: mesh15, colors: ["#0b8793", "#360033"] },
-  { id: "mesh-16", name: "Mesh 16", src: mesh16, colors: ["#232526", "#414345"] },
-  { id: "mesh-17", name: "Mesh 17", src: mesh17, colors: ["#000000", "#ffffff"] },
+  {
+    id: "mesh-10",
+    name: "Mesh 10",
+    src: mesh10,
+    colors: ["#0d324d", "#7f5a83"],
+  },
+  {
+    id: "mesh-11",
+    name: "Mesh 11",
+    src: mesh11,
+    colors: ["#2c3e50", "#4ca1af"],
+  },
+  {
+    id: "mesh-12",
+    name: "Mesh 12",
+    src: mesh12,
+    colors: ["#1d2b64", "#f8cdda"],
+  },
+  {
+    id: "mesh-13",
+    name: "Mesh 13",
+    src: mesh13,
+    colors: ["#42275a", "#734b6d"],
+  },
+  {
+    id: "mesh-14",
+    name: "Mesh 14",
+    src: mesh14,
+    colors: ["#16222a", "#3a6073"],
+  },
+  {
+    id: "mesh-15",
+    name: "Mesh 15",
+    src: mesh15,
+    colors: ["#0b8793", "#360033"],
+  },
+  {
+    id: "mesh-16",
+    name: "Mesh 16",
+    src: mesh16,
+    colors: ["#232526", "#414345"],
+  },
+  {
+    id: "mesh-17",
+    name: "Mesh 17",
+    src: mesh17,
+    colors: ["#000000", "#ffffff"],
+  },
 ];
 
 interface BackgroundSelectorProps {
@@ -74,9 +120,11 @@ export const BackgroundSelector = memo(function BackgroundSelector({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-foreground font-mono text-balance">Background</h3>
+        <h3 className="text-sm font-medium text-foreground font-mono text-balance">
+          Background
+        </h3>
       </div>
-      
+
       {/* Solid Colors */}
       <div className="space-y-2">
         <span className="text-xs text-foreground0">Solid</span>
@@ -88,12 +136,15 @@ export const BackgroundSelector = memo(function BackgroundSelector({
               aria-label={`Select ${type} background`}
               className={cn(
                 "size-10 rounded-lg transition-all",
-                type === "transparent" && "bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImNoZWNrZXJib2FyZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iNSIgd2lkdGg9IjUiIGhlaWdodD0iNSIgZmlsbD0iI2UwZTBlMCIvPjxyZWN0IHk9IjUiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiNlMGUwZTAiLz48cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIGZpbGw9InVybCgjY2hlY2tlcmJvYXJkKSIvPjwvc3ZnPg==')]",
+                type === "transparent" &&
+                  "bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImNoZWNrZXJib2FyZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iNSIgd2lkdGg9IjUiIGhlaWdodD0iNSIgZmlsbD0iI2UwZTBlMCIvPjxyZWN0IHk9IjUiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiNlMGUwZTAiLz48cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIGZpbGw9InVybCgjY2hlY2tlcmJvYXJkKSIvPjwvc3ZnPg==')]",
                 backgroundType === type
                   ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-card"
-                  : "ring-1 ring-border hover:ring-ring"
+                  : "ring-1 ring-border hover:ring-ring",
               )}
-              style={type !== "transparent" ? { backgroundColor: color } : undefined}
+              style={
+                type !== "transparent" ? { backgroundColor: color } : undefined
+              }
               title={type.charAt(0).toUpperCase() + type.slice(1)}
             />
           ))}
@@ -106,7 +157,7 @@ export const BackgroundSelector = memo(function BackgroundSelector({
                 "size-10 rounded-lg transition-all",
                 backgroundType === "custom"
                   ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-card"
-                  : "ring-1 ring-border hover:ring-ring"
+                  : "ring-1 ring-border hover:ring-ring",
               )}
               style={{ backgroundColor: customColor }}
               title="Custom color"
@@ -129,7 +180,8 @@ export const BackgroundSelector = memo(function BackgroundSelector({
         <span className="text-xs text-foreground0">Gradients</span>
         <div className="grid grid-cols-4 gap-2">
           {gradientOptions.map((gradient) => {
-            const isSelected = backgroundType === "gradient" && selectedGradient === gradient.id;
+            const isSelected =
+              backgroundType === "gradient" && selectedGradient === gradient.id;
             return (
               <button
                 key={gradient.id}
@@ -142,7 +194,7 @@ export const BackgroundSelector = memo(function BackgroundSelector({
                   "relative w-full aspect-square rounded-lg transition-all overflow-hidden",
                   isSelected
                     ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-card"
-                    : "ring-1 ring-border hover:ring-ring"
+                    : "ring-1 ring-border hover:ring-ring",
                 )}
                 title={gradient.name}
               >
@@ -154,8 +206,19 @@ export const BackgroundSelector = memo(function BackgroundSelector({
                 {isSelected && (
                   <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
                     <div className="size-6 rounded-full bg-blue-500 flex items-center justify-center shadow-lg">
-                      <svg className="size-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="size-3.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </div>
                   </div>

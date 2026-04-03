@@ -38,7 +38,7 @@ export async function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = (event) => {
       const error = new Error(
         `Failed to load image: ${src}. This may be due to CORS restrictions, ` +
-        `invalid path, or asset protocol scope issues in production builds.`
+          `invalid path, or asset protocol scope issues in production builds.`,
       );
       console.error("Image load error:", { src, event });
       reject(error);
@@ -68,7 +68,7 @@ function drawBackground(
   width: number,
   height: number,
   settings: EditorSettings,
-  bgImage: HTMLImageElement | null
+  bgImage: HTMLImageElement | null,
 ) {
   switch (settings.backgroundType) {
     case "transparent": {
@@ -112,7 +112,6 @@ function drawBackground(
   }
 }
 
-
 /**
  * Fast box blur approximation for preview (much faster than Gaussian)
  * Uses multiple passes of box blur to approximate Gaussian blur
@@ -120,25 +119,28 @@ function drawBackground(
  */
 function applyFastBoxBlur(canvas: HTMLCanvasElement, radius: number) {
   if (radius <= 0) return;
-  
+
   const passes = Math.min(Math.ceil(radius / 15) + 1, 3);
   const boxRadius = Math.floor(radius / passes);
-  
+
   if (boxRadius <= 0) return;
-  
+
   const ctx = canvas.getContext("2d")!;
   const width = canvas.width;
   const height = canvas.height;
   const kernelSize = boxRadius * 2 + 1;
-  
+
   for (let pass = 0; pass < passes; pass++) {
     const imageData = ctx.getImageData(0, 0, width, height);
     const data = imageData.data;
     const tempData = new Uint8ClampedArray(data);
-    
+
     for (let y = 0; y < height; y++) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-      
+      let rSum = 0,
+        gSum = 0,
+        bSum = 0,
+        aSum = 0;
+
       for (let x = 0; x < width; x++) {
         if (x === 0) {
           for (let kx = -boxRadius; kx <= boxRadius; kx++) {
@@ -154,13 +156,13 @@ function applyFastBoxBlur(canvas: HTMLCanvasElement, radius: number) {
           const addX = Math.max(0, Math.min(width - 1, x + boxRadius));
           const removeIdx = (y * width + removeX) * 4;
           const addIdx = (y * width + addX) * 4;
-          
+
           rSum = rSum - data[removeIdx] + data[addIdx];
           gSum = gSum - data[removeIdx + 1] + data[addIdx + 1];
           bSum = bSum - data[removeIdx + 2] + data[addIdx + 2];
           aSum = aSum - data[removeIdx + 3] + data[addIdx + 3];
         }
-        
+
         const idx = (y * width + x) * 4;
         tempData[idx] = Math.round(rSum / kernelSize);
         tempData[idx + 1] = Math.round(gSum / kernelSize);
@@ -168,12 +170,15 @@ function applyFastBoxBlur(canvas: HTMLCanvasElement, radius: number) {
         tempData[idx + 3] = Math.round(aSum / kernelSize);
       }
     }
-    
+
     const finalData = new Uint8ClampedArray(tempData);
-    
+
     for (let x = 0; x < width; x++) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-      
+      let rSum = 0,
+        gSum = 0,
+        bSum = 0,
+        aSum = 0;
+
       for (let y = 0; y < height; y++) {
         if (y === 0) {
           for (let ky = -boxRadius; ky <= boxRadius; ky++) {
@@ -189,13 +194,13 @@ function applyFastBoxBlur(canvas: HTMLCanvasElement, radius: number) {
           const addY = Math.max(0, Math.min(height - 1, y + boxRadius));
           const removeIdx = (removeY * width + x) * 4;
           const addIdx = (addY * width + x) * 4;
-          
+
           rSum = rSum - tempData[removeIdx] + tempData[addIdx];
           gSum = gSum - tempData[removeIdx + 1] + tempData[addIdx + 1];
           bSum = bSum - tempData[removeIdx + 2] + tempData[addIdx + 2];
           aSum = aSum - tempData[removeIdx + 3] + tempData[addIdx + 3];
         }
-        
+
         const idx = (y * width + x) * 4;
         finalData[idx] = Math.round(rSum / kernelSize);
         finalData[idx + 1] = Math.round(gSum / kernelSize);
@@ -203,7 +208,7 @@ function applyFastBoxBlur(canvas: HTMLCanvasElement, radius: number) {
         finalData[idx + 3] = Math.round(aSum / kernelSize);
       }
     }
-    
+
     ctx.putImageData(new ImageData(finalData, width, height), 0, 0);
   }
 }
@@ -246,7 +251,10 @@ export interface PreviewGeneratorResult {
   previewUrl: string | null;
   isGenerating: boolean;
   error: string | null;
-  renderHighQualityCanvas: (annotations: Annotation[], imagePath?: string) => Promise<HTMLCanvasElement | null>;
+  renderHighQualityCanvas: (
+    annotations: Annotation[],
+    imagePath?: string,
+  ) => Promise<HTMLCanvasElement | null>;
 }
 
 const PREVIEW_DEBOUNCE_MS = 16;
@@ -269,7 +277,7 @@ export function usePreviewGenerator({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const previewUrlRef = useRef<string | null>(null);
   const renderIdRef = useRef(0);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -293,117 +301,152 @@ export function usePreviewGenerator({
   ]);
 
   // Core render function
-  const generatePreview = useCallback(async (settingsToRender: EditorSettings) => {
-    if (!screenshotImage || !canvasRef.current) return;
+  const generatePreview = useCallback(
+    async (settingsToRender: EditorSettings) => {
+      if (!screenshotImage || !canvasRef.current) return;
 
-    const currentRenderId = ++renderIdRef.current;
-    const canvas = canvasRef.current;
+      const currentRenderId = ++renderIdRef.current;
+      const canvas = canvasRef.current;
 
-    const bgWidth = screenshotImage.width + paddingLeft + paddingRight;
-    const bgHeight = screenshotImage.height + paddingTop + paddingBottom;
+      const bgWidth = screenshotImage.width + paddingLeft + paddingRight;
+      const bgHeight = screenshotImage.height + paddingTop + paddingBottom;
 
-    setIsGenerating(true);
-    setError(null);
+      setIsGenerating(true);
+      setError(null);
 
-    try {
-      const bgSrc = getBackgroundImageSrc(settingsToRender);
-      let bgImage: HTMLImageElement | null = null;
-      if (bgSrc) {
-        bgImage = await loadImage(bgSrc);
-      }
-
-      if (currentRenderId !== renderIdRef.current) return;
-
-      canvas.width = bgWidth;
-      canvas.height = bgHeight;
-      const ctx = canvas.getContext("2d", { alpha: true });
-      if (!ctx) {
-        setError("Failed to get canvas context");
-        return;
-      }
-
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-
-      // When all padding is 0, skip background and shadow - just draw the image directly
-      const totalPadding = paddingTop + paddingBottom + paddingLeft + paddingRight;
-      if (totalPadding === 0) {
-        ctx.beginPath();
-        ctx.roundRect(0, 0, screenshotImage.width, screenshotImage.height, settingsToRender.borderRadius);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(screenshotImage, 0, 0, screenshotImage.width, screenshotImage.height);
-      } else {
-        const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = bgWidth;
-        tempCanvas.height = bgHeight;
-        const tempCtx = tempCanvas.getContext("2d")!;
-        drawBackground(tempCtx, bgWidth, bgHeight, settingsToRender, bgImage);
-        
-        if (settingsToRender.blurAmount > 0) {
-          applyFastBoxBlur(tempCanvas, settingsToRender.blurAmount);
+      try {
+        const bgSrc = getBackgroundImageSrc(settingsToRender);
+        let bgImage: HTMLImageElement | null = null;
+        if (bgSrc) {
+          bgImage = await loadImage(bgSrc);
         }
 
-        applyNoise(tempCanvas, settingsToRender.noiseAmount);
+        if (currentRenderId !== renderIdRef.current) return;
 
-        ctx.drawImage(tempCanvas, 0, 0);
-
-        const imageCanvas = document.createElement("canvas");
-        imageCanvas.width = screenshotImage.width;
-        imageCanvas.height = screenshotImage.height;
-        const imageCtx = imageCanvas.getContext("2d");
-        if (!imageCtx) {
-          setError("Failed to get image canvas context");
+        canvas.width = bgWidth;
+        canvas.height = bgHeight;
+        const ctx = canvas.getContext("2d", { alpha: true });
+        if (!ctx) {
+          setError("Failed to get canvas context");
           return;
         }
 
-        imageCtx.imageSmoothingEnabled = true;
-        imageCtx.imageSmoothingQuality = "high";
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
 
-        imageCtx.beginPath();
-        imageCtx.roundRect(0, 0, screenshotImage.width, screenshotImage.height, settingsToRender.borderRadius);
-        imageCtx.closePath();
-        imageCtx.clip();
+        // When all padding is 0, skip background and shadow - just draw the image directly
+        const totalPadding =
+          paddingTop + paddingBottom + paddingLeft + paddingRight;
+        if (totalPadding === 0) {
+          ctx.beginPath();
+          ctx.roundRect(
+            0,
+            0,
+            screenshotImage.width,
+            screenshotImage.height,
+            settingsToRender.borderRadius,
+          );
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(
+            screenshotImage,
+            0,
+            0,
+            screenshotImage.width,
+            screenshotImage.height,
+          );
+        } else {
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = bgWidth;
+          tempCanvas.height = bgHeight;
+          const tempCtx = tempCanvas.getContext("2d")!;
+          drawBackground(tempCtx, bgWidth, bgHeight, settingsToRender, bgImage);
 
-        imageCtx.drawImage(screenshotImage, 0, 0, screenshotImage.width, screenshotImage.height);
-
-        ctx.save();
-        ctx.shadowColor = `rgba(0, 0, 0, ${settingsToRender.shadow.opacity / 100})`;
-        ctx.shadowBlur = settingsToRender.shadow.blur;
-        ctx.shadowOffsetX = settingsToRender.shadow.offsetX;
-        ctx.shadowOffsetY = settingsToRender.shadow.offsetY;
-
-        ctx.drawImage(imageCanvas, paddingLeft, paddingTop);
-
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.restore();
-      }
-
-      if (currentRenderId !== renderIdRef.current) return;
-
-      canvas.toBlob((blob) => {
-        if (blob && currentRenderId === renderIdRef.current) {
-          if (previewUrlRef.current) {
-            URL.revokeObjectURL(previewUrlRef.current);
+          if (settingsToRender.blurAmount > 0) {
+            applyFastBoxBlur(tempCanvas, settingsToRender.blurAmount);
           }
-          const url = URL.createObjectURL(blob);
-          previewUrlRef.current = url;
-          setPreviewUrl(url);
-          setIsGenerating(false);
+
+          applyNoise(tempCanvas, settingsToRender.noiseAmount);
+
+          ctx.drawImage(tempCanvas, 0, 0);
+
+          const imageCanvas = document.createElement("canvas");
+          imageCanvas.width = screenshotImage.width;
+          imageCanvas.height = screenshotImage.height;
+          const imageCtx = imageCanvas.getContext("2d");
+          if (!imageCtx) {
+            setError("Failed to get image canvas context");
+            return;
+          }
+
+          imageCtx.imageSmoothingEnabled = true;
+          imageCtx.imageSmoothingQuality = "high";
+
+          imageCtx.beginPath();
+          imageCtx.roundRect(
+            0,
+            0,
+            screenshotImage.width,
+            screenshotImage.height,
+            settingsToRender.borderRadius,
+          );
+          imageCtx.closePath();
+          imageCtx.clip();
+
+          imageCtx.drawImage(
+            screenshotImage,
+            0,
+            0,
+            screenshotImage.width,
+            screenshotImage.height,
+          );
+
+          ctx.save();
+          ctx.shadowColor = `rgba(0, 0, 0, ${settingsToRender.shadow.opacity / 100})`;
+          ctx.shadowBlur = settingsToRender.shadow.blur;
+          ctx.shadowOffsetX = settingsToRender.shadow.offsetX;
+          ctx.shadowOffsetY = settingsToRender.shadow.offsetY;
+
+          ctx.drawImage(imageCanvas, paddingLeft, paddingTop);
+
+          ctx.shadowColor = "transparent";
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          ctx.restore();
         }
-      }, "image/png");
-    } catch (err) {
-      if (currentRenderId === renderIdRef.current) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(`Preview generation failed: ${message}`);
-        setIsGenerating(false);
-        console.error("Preview generation failed:", err);
+
+        if (currentRenderId !== renderIdRef.current) return;
+
+        canvas.toBlob((blob) => {
+          if (blob && currentRenderId === renderIdRef.current) {
+            if (previewUrlRef.current) {
+              URL.revokeObjectURL(previewUrlRef.current);
+            }
+            const url = URL.createObjectURL(blob);
+            previewUrlRef.current = url;
+            setPreviewUrl(url);
+            setIsGenerating(false);
+          }
+        }, "image/png");
+      } catch (err) {
+        if (currentRenderId === renderIdRef.current) {
+          const message = err instanceof Error ? err.message : String(err);
+          setError(`Preview generation failed: ${message}`);
+          setIsGenerating(false);
+          console.error("Preview generation failed:", err);
+        }
       }
-    }
-  }, [screenshotImage, canvasRef, paddingTop, paddingBottom, paddingLeft, paddingRight]);
+    },
+    [
+      screenshotImage,
+      canvasRef,
+      paddingTop,
+      paddingBottom,
+      paddingLeft,
+      paddingRight,
+    ],
+  );
 
   // Debounced preview generation
   useEffect(() => {
@@ -418,7 +461,8 @@ export function usePreviewGenerator({
     pendingSettingsRef.current = settings;
 
     // Use longer debounce for blur to improve performance
-    const debounceDelay = settings.blurAmount > 0 ? BLUR_DEBOUNCE_MS : PREVIEW_DEBOUNCE_MS;
+    const debounceDelay =
+      settings.blurAmount > 0 ? BLUR_DEBOUNCE_MS : PREVIEW_DEBOUNCE_MS;
 
     // Debounce the actual render
     debounceTimerRef.current = setTimeout(() => {
@@ -461,36 +505,51 @@ export function usePreviewGenerator({
 
   // High quality canvas render for save/copy
   const renderHighQualityCanvas = useCallback(
-    async (annotations: Annotation[], imagePath?: string): Promise<HTMLCanvasElement | null> => {
+    async (
+      annotations: Annotation[],
+      imagePath?: string,
+    ): Promise<HTMLCanvasElement | null> => {
       if (!screenshotImage) return null;
 
       try {
-        if (settings.blurAmount > 0 && imagePath && (settings.backgroundType === "transparent" || settings.backgroundType === "white" || settings.backgroundType === "black" || settings.backgroundType === "gray" || settings.backgroundType === "custom")) {
+        if (
+          settings.blurAmount > 0 &&
+          imagePath &&
+          (settings.backgroundType === "transparent" ||
+            settings.backgroundType === "white" ||
+            settings.backgroundType === "black" ||
+            settings.backgroundType === "gray" ||
+            settings.backgroundType === "custom")
+        ) {
           try {
             const { invoke } = await import("@tauri-apps/api/core");
-            const rustRendered = await invoke<string>("render_image_with_effects_rust", {
-              imagePath,
-              settings: {
-                background_type: settings.backgroundType,
-                custom_color: settings.customColor,
-                blur_amount: settings.blurAmount,
-                noise_amount: settings.noiseAmount,
-                border_radius: settings.borderRadius,
-                padding_top: paddingTop,
-                padding_bottom: paddingBottom,
-                padding_left: paddingLeft,
-                padding_right: paddingRight,
-                shadow_blur: settings.shadow.blur,
-                shadow_offset_x: settings.shadow.offsetX,
-                shadow_offset_y: settings.shadow.offsetY,
-                shadow_opacity: settings.shadow.opacity,
+            const rustRendered = await invoke<string>(
+              "render_image_with_effects_rust",
+              {
+                imagePath,
+                settings: {
+                  background_type: settings.backgroundType,
+                  custom_color: settings.customColor,
+                  blur_amount: settings.blurAmount,
+                  noise_amount: settings.noiseAmount,
+                  border_radius: settings.borderRadius,
+                  padding_top: paddingTop,
+                  padding_bottom: paddingBottom,
+                  padding_left: paddingLeft,
+                  padding_right: paddingRight,
+                  shadow_blur: settings.shadow.blur,
+                  shadow_offset_x: settings.shadow.offsetX,
+                  shadow_offset_y: settings.shadow.offsetY,
+                  shadow_opacity: settings.shadow.opacity,
+                },
               },
-            });
+            );
 
             const img = new Image();
             await new Promise<void>((resolve, reject) => {
               img.onload = () => resolve();
-              img.onerror = () => reject(new Error("Failed to load Rust-rendered image"));
+              img.onerror = () =>
+                reject(new Error("Failed to load Rust-rendered image"));
               img.src = rustRendered;
             });
 
@@ -533,7 +592,8 @@ export function usePreviewGenerator({
           paddingBottom,
           paddingLeft,
           paddingRight,
-          gradientImage: settings.backgroundType === "gradient" ? bgImage : null,
+          gradientImage:
+            settings.backgroundType === "gradient" ? bgImage : null,
           shadow: settings.shadow,
         });
 
@@ -553,7 +613,15 @@ export function usePreviewGenerator({
         return null;
       }
     },
-    [screenshotImage, settings, paddingTop, paddingBottom, paddingLeft, paddingRight, imagePath]
+    [
+      screenshotImage,
+      settings,
+      paddingTop,
+      paddingBottom,
+      paddingLeft,
+      paddingRight,
+      imagePath,
+    ],
   );
 
   return {

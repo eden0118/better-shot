@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useEditorStore, editorActions, usePadding, useSettings } from "./editorStore";
+import {
+  useEditorStore,
+  editorActions,
+  usePadding,
+  useSettings,
+} from "./editorStore";
 import { act, renderHook } from "@testing-library/react";
 
 describe("editorStore - padding feature", () => {
@@ -190,7 +195,8 @@ describe("editorStore - padding feature", () => {
   describe("padding with other settings", () => {
     it("should not affect other settings when changing padding", () => {
       const initialNoise = useEditorStore.getState().settings.noiseAmount;
-      const initialBorderRadius = useEditorStore.getState().settings.borderRadius;
+      const initialBorderRadius =
+        useEditorStore.getState().settings.borderRadius;
 
       act(() => {
         editorActions.setPadding(150);

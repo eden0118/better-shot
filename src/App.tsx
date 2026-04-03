@@ -32,16 +32,34 @@ import {
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import { Store } from "@tauri-apps/plugin-store";
 import { toast } from "sonner";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { KeyboardShortcut } from "./components/preferences/KeyboardShortcutManager";
 import { PreferencesPage } from "./components/preferences/PreferencesPage";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AppWindowMac, Scan, Settings } from "lucide-react";
 
 // Lazy load heavy components
-const ImageEditor = lazy(() => import("./components/ImageEditor").then(m => ({ default: m.ImageEditor })));
-const OnboardingFlow = lazy(() => import("./components/onboarding/OnboardingFlow").then(m => ({ default: m.OnboardingFlow })));
+const ImageEditor = lazy(() =>
+  import("./components/ImageEditor").then((m) => ({ default: m.ImageEditor })),
+);
+const OnboardingFlow = lazy(() =>
+  import("./components/onboarding/OnboardingFlow").then((m) => ({
+    default: m.OnboardingFlow,
+  })),
+);
 
 type AppMode = "main" | "editing" | "menu";
 type CaptureMode = "fullscreen" | "window" | "region";
@@ -51,9 +69,26 @@ function LoadingFallback() {
   return (
     <div className="min-h-dvh flex items-center justify-center bg-background">
       <div className="flex items-center gap-2 text-muted-foreground">
-        <svg className="animate-spin size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <svg
+          className="animate-spin size-5"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
         </svg>
         <span>Loading...</span>
       </div>
@@ -62,7 +97,12 @@ function LoadingFallback() {
 }
 
 const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
-  { id: "show-menu", action: "Show Capture Menu", shortcut: "CommandOrControl+Shift+F", enabled: true },
+  {
+    id: "show-menu",
+    action: "Show Capture Menu",
+    shortcut: "CommandOrControl+Shift+F",
+    enabled: true,
+  },
 ];
 
 /**
@@ -96,8 +136,12 @@ async function restoreWindowOnScreen(mouseX?: number, mouseY?: number) {
         const scaleFactor = targetMonitor.scaleFactor;
         const physicalWindowWidth = windowWidth * scaleFactor;
         const physicalWindowHeight = windowHeight * scaleFactor;
-        const centerX = targetMonitor.position.x + (targetMonitor.size.width - physicalWindowWidth) / 2;
-        const centerY = targetMonitor.position.y + (targetMonitor.size.height - physicalWindowHeight) / 2;
+        const centerX =
+          targetMonitor.position.x +
+          (targetMonitor.size.width - physicalWindowWidth) / 2;
+        const centerY =
+          targetMonitor.position.y +
+          (targetMonitor.size.height - physicalWindowHeight) / 2;
 
         await appWindow.setPosition(new PhysicalPosition(centerX, centerY));
       } else {
@@ -162,9 +206,8 @@ async function showQuickOverlay(
   }
 
   try {
-    const { getAllWebviewWindows } = await import(
-      "@tauri-apps/api/webviewWindow"
-    );
+    const { getAllWebviewWindows } =
+      await import("@tauri-apps/api/webviewWindow");
     const allWindows = await getAllWebviewWindows();
     const overlay = allWindows.find((win) => win.label === "quick-overlay");
 
@@ -245,17 +288,26 @@ function App() {
   const [saveDir, setSaveDir] = useState<string>("");
   const [copyToClipboard, setCopyToClipboard] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [tempScreenshotPath, setTempScreenshotPath] = useState<string | null>(null);
+  const [tempScreenshotPath, setTempScreenshotPath] = useState<string | null>(
+    null,
+  );
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [shortcuts, setShortcuts] = useState<KeyboardShortcut[]>(DEFAULT_SHORTCUTS);
+  const [shortcuts, setShortcuts] =
+    useState<KeyboardShortcut[]>(DEFAULT_SHORTCUTS);
   const [tempDir, setTempDir] = useState<string>("/tmp");
-  const [selectedPresetSize, setSelectedPresetSize] = useState<{ width: number; height: number; name: string } | null>(null);
+  const [selectedPresetSize, setSelectedPresetSize] = useState<{
+    width: number;
+    height: number;
+    name: string;
+  } | null>(null);
 
   // Refs to hold current values for use in callbacks that may have stale closures
   const settingsRef = useRef({ saveDir, copyToClipboard, tempDir });
   const registeredShortcutsRef = useRef<Set<string>>(new Set());
   const lastCaptureTimeRef = useRef(0);
-  const handleCaptureRef = useRef<((captureMode?: CaptureMode) => Promise<void>) | null>(null);
+  const handleCaptureRef = useRef<
+    ((captureMode?: CaptureMode) => Promise<void>) | null
+  >(null);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -311,18 +363,27 @@ function App() {
           }
         }
 
-        const savedShortcuts = await store.get<KeyboardShortcut[]>("keyboardShortcuts");
+        const savedShortcuts =
+          await store.get<KeyboardShortcut[]>("keyboardShortcuts");
         if (savedShortcuts && savedShortcuts.length > 0) {
           setShortcuts(savedShortcuts);
         }
 
         // Migrate legacy background image paths to asset IDs
-        const savedBackgroundImage = await store.get<string>("defaultBackgroundImage");
-        if (savedBackgroundImage && !isAssetId(savedBackgroundImage) && !isDataUrl(savedBackgroundImage)) {
+        const savedBackgroundImage = await store.get<string>(
+          "defaultBackgroundImage",
+        );
+        if (
+          savedBackgroundImage &&
+          !isAssetId(savedBackgroundImage) &&
+          !isDataUrl(savedBackgroundImage)
+        ) {
           // This is a legacy path that needs migration
           const migratedValue = migrateStoredValue(savedBackgroundImage);
           if (migratedValue && migratedValue !== savedBackgroundImage) {
-            console.log(`Migrating background image: ${savedBackgroundImage} -> ${migratedValue}`);
+            console.log(
+              `Migrating background image: ${savedBackgroundImage} -> ${migratedValue}`,
+            );
             await store.set("defaultBackgroundImage", migratedValue);
             await store.save();
           }
@@ -351,99 +412,107 @@ function App() {
     // setMode("editing");
   }, []);
 
-  const handleCapture = useCallback(async (captureMode: CaptureMode = "fullscreen") => {
-    /**
-     * Main capture flow:
-     * 1. Debounce to prevent rapid consecutive captures
-     * 2. Hide app window to capture clean screen
-     * 3. Invoke Tauri command to capture screenshot
-     * 4. Route screenshot to editor via mode transition
-     */
-    const now = Date.now();
-    if (now - lastCaptureTimeRef.current < 600) {
-      return;
-    }
-    lastCaptureTimeRef.current = now;
+  const handleCapture = useCallback(
+    async (captureMode: CaptureMode = "fullscreen") => {
+      /**
+       * Main capture flow:
+       * 1. Debounce to prevent rapid consecutive captures
+       * 2. Hide app window to capture clean screen
+       * 3. Invoke Tauri command to capture screenshot
+       * 4. Route screenshot to editor via mode transition
+       */
+      const now = Date.now();
+      if (now - lastCaptureTimeRef.current < 600) {
+        return;
+      }
+      lastCaptureTimeRef.current = now;
 
-    if (isCapturing) return;
+      if (isCapturing) return;
 
-    setIsCapturing(true);
+      setIsCapturing(true);
 
-    const appWindow = getCurrentWindow();
+      const appWindow = getCurrentWindow();
 
-    // Read current settings from ref to avoid stale closure issues
-    const { tempDir: currentTempDir } = settingsRef.current;
+      // Read current settings from ref to avoid stale closure issues
+      const { tempDir: currentTempDir } = settingsRef.current;
 
-    try {
-      await appWindow.hide();
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
-      const commandMap: Record<CaptureMode, string> = {
-        fullscreen: "native_capture_fullscreen",
-        window: "native_capture_window",
-        region: "native_capture_interactive",
-      };
-
-      const screenshotPath = await invoke<string>(commandMap[captureMode], {
-        saveDir: currentTempDir,
-      });
-
-      // Get mouse position IMMEDIATELY after screenshot completes
-      // This captures where the user finished their selection
-      let mouseX: number | undefined;
-      let mouseY: number | undefined;
       try {
-        const [x, y] = await invoke<[number, number]>("get_mouse_position");
-        mouseX = x;
-        mouseY = y;
-      } catch {
-        // Silently fail - will fall back to centering
-      }
+        await appWindow.hide();
+        await new Promise((resolve) => setTimeout(resolve, 400));
 
-      invoke("play_screenshot_sound").catch(console.error);
+        const commandMap: Record<CaptureMode, string> = {
+          fullscreen: "native_capture_fullscreen",
+          window: "native_capture_window",
+          region: "native_capture_interactive",
+        };
 
-      setTempScreenshotPath(screenshotPath);
-      setMode("editing");
-      try {
-        await invoke("move_window_to_active_space");
-      } catch {
+        const screenshotPath = await invoke<string>(commandMap[captureMode], {
+          saveDir: currentTempDir,
+        });
+
+        // Get mouse position IMMEDIATELY after screenshot completes
+        // This captures where the user finished their selection
+        let mouseX: number | undefined;
+        let mouseY: number | undefined;
+        try {
+          const [x, y] = await invoke<[number, number]>("get_mouse_position");
+          mouseX = x;
+          mouseY = y;
+        } catch {
+          // Silently fail - will fall back to centering
+        }
+
+        invoke("play_screenshot_sound").catch(console.error);
+
+        setTempScreenshotPath(screenshotPath);
+        setMode("editing");
+        try {
+          await invoke("move_window_to_active_space");
+        } catch {}
+        await restoreWindowOnScreen(mouseX, mouseY);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        if (
+          errorMessage.includes("cancelled") ||
+          errorMessage.includes("was cancelled")
+        ) {
+          await restoreWindow();
+        } else if (errorMessage.includes("already in progress")) {
+          toast.error("Screenshot already in progress", {
+            description: "Please wait for the current screenshot to complete",
+          });
+          await restoreWindow();
+        } else if (
+          errorMessage.toLowerCase().includes("permission") ||
+          errorMessage.toLowerCase().includes("access") ||
+          errorMessage.toLowerCase().includes("denied")
+        ) {
+          toast.error("Permission required", {
+            description:
+              "Please go to System Settings > Privacy & Security > Screen Recording and enable access for Better Shot, then restart the app.",
+            duration: 6000,
+          });
+          await restoreWindow();
+        } else {
+          toast.error("Screenshot failed", {
+            description: errorMessage,
+          });
+          await restoreWindow();
+        }
+      } finally {
+        setIsCapturing(false);
       }
-      await restoreWindowOnScreen(mouseX, mouseY);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      if (errorMessage.includes("cancelled") || errorMessage.includes("was cancelled")) {
-        await restoreWindow();
-      } else if (errorMessage.includes("already in progress")) {
-        toast.error("Screenshot already in progress", {
-          description: "Please wait for the current screenshot to complete",
-        });
-        await restoreWindow();
-      } else if (
-        errorMessage.toLowerCase().includes("permission") ||
-        errorMessage.toLowerCase().includes("access") ||
-        errorMessage.toLowerCase().includes("denied")
-      ) {
-        toast.error("Permission required", {
-          description: "Please go to System Settings > Privacy & Security > Screen Recording and enable access for Better Shot, then restart the app.",
-          duration: 6000,
-        });
-        await restoreWindow();
-      } else {
-        toast.error("Screenshot failed", {
-          description: errorMessage,
-        });
-        await restoreWindow();
-      }
-    } finally {
-      setIsCapturing(false);
-    }
-  }, [settingsRef, lastCaptureTimeRef]);
+    },
+    [settingsRef, lastCaptureTimeRef],
+  );
 
   // Setup hotkeys whenever settings change
   useEffect(() => {
     const setupHotkeys = async () => {
       try {
-        const shortcutsToUnregister = Array.from(registeredShortcutsRef.current);
+        const shortcutsToUnregister = Array.from(
+          registeredShortcutsRef.current,
+        );
         if (shortcutsToUnregister.length > 0) {
           try {
             await unregister(shortcutsToUnregister);
@@ -465,7 +534,7 @@ function App() {
             } catch (err) {
               console.error(
                 `Failed to register shortcut ${shortcut.shortcut}:`,
-                err
+                err,
               );
             }
           }
@@ -504,22 +573,26 @@ function App() {
     const setupListeners = async () => {
       // Use refs to always call the latest handler without re-registering
       unlisten1 = await listen("capture-fullscreen", () => {
-        if (mounted && handleCaptureRef.current) handleCaptureRef.current("fullscreen");
+        if (mounted && handleCaptureRef.current)
+          handleCaptureRef.current("fullscreen");
       });
       unlisten2 = await listen("capture-window", () => {
-        if (mounted && handleCaptureRef.current) handleCaptureRef.current("window");
+        if (mounted && handleCaptureRef.current)
+          handleCaptureRef.current("window");
       });
-      unlisten3 = await listen<{ path: string }>("open-editor-for-path", async (event) => {
-        if (!mounted) return;
-        const { path } = event.payload;
-        setTempScreenshotPath(path);
-        setMode("editing");
-        try {
-          await invoke("move_window_to_active_space");
-        } catch {
-        }
-        await restoreWindow();
-      });
+      unlisten3 = await listen<{ path: string }>(
+        "open-editor-for-path",
+        async (event) => {
+          if (!mounted) return;
+          const { path } = event.payload;
+          setTempScreenshotPath(path);
+          setMode("editing");
+          try {
+            await invoke("move_window_to_active_space");
+          } catch {}
+          await restoreWindow();
+        },
+      );
       unlisten4 = await listen("show-last-capture-overlay", async () => {
         if (!mounted) return;
         try {
@@ -642,7 +715,6 @@ function App() {
     await showNavbarWindow();
   }
 
-
   if (showOnboarding) {
     return (
       <Suspense fallback={<LoadingFallback />}>
@@ -693,7 +765,9 @@ function App() {
           <PreferencesPage
             onSettingsChange={() => {
               Store.load("settings.json")
-                .then((store) => store.get<KeyboardShortcut[]>("keyboardShortcuts"))
+                .then((store) =>
+                  store.get<KeyboardShortcut[]>("keyboardShortcuts"),
+                )
                 .then((saved) => {
                   if (saved && saved.length > 0) setShortcuts(saved);
                 })
@@ -708,7 +782,10 @@ function App() {
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-4xl font-bold text-foreground">Better Shot</h1>
-          <p className="text-muted-foreground">Capture, edit, and annotate your screenshots with professional quality.</p>
+          <p className="text-muted-foreground">
+            Capture, edit, and annotate your screenshots with professional
+            quality.
+          </p>
         </div>
 
         {/* Three capture buttons */}
@@ -748,15 +825,22 @@ function App() {
             className="size-4 rounded border-border"
             defaultChecked
           />
-          <label htmlFor="auto-background" className="text-muted-foreground cursor-pointer">
+          <label
+            htmlFor="auto-background"
+            className="text-muted-foreground cursor-pointer"
+          >
             Auto-apply background
-            <span className="text-xs text-muted-foreground/70 ml-1">(Apply default background and save instantly)</span>
+            <span className="text-xs text-muted-foreground/70 ml-1">
+              (Apply default background and save instantly)
+            </span>
           </label>
         </div>
 
         {/* Keyboard shortcuts */}
         <div className="border-t border-border pt-6 space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Keyboard Shortcuts</h2>
+          <h2 className="text-sm font-semibold text-foreground">
+            Keyboard Shortcuts
+          </h2>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Region</span>

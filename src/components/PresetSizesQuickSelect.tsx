@@ -7,7 +7,9 @@ interface PresetSizesQuickSelectProps {
   onSelectSize?: (width: number, height: number, name: string) => void;
 }
 
-export function PresetSizesQuickSelect({ onSelectSize }: PresetSizesQuickSelectProps) {
+export function PresetSizesQuickSelect({
+  onSelectSize,
+}: PresetSizesQuickSelectProps) {
   const { presetSizes, isLoading } = usePresetSizes();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -22,10 +24,16 @@ export function PresetSizesQuickSelect({ onSelectSize }: PresetSizesQuickSelectP
         className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary border border-border transition-colors text-sm font-medium text-foreground"
       >
         <span className="flex items-center gap-2">
-          {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          {isExpanded ? (
+            <ChevronUp className="size-4" />
+          ) : (
+            <ChevronDown className="size-4" />
+          )}
           Quick Preset Sizes
         </span>
-        <span className="text-xs text-muted-foreground">{presetSizes.length} saved</span>
+        <span className="text-xs text-muted-foreground">
+          {presetSizes.length} saved
+        </span>
       </button>
 
       {isExpanded && (
@@ -41,7 +49,7 @@ export function PresetSizesQuickSelect({ onSelectSize }: PresetSizesQuickSelectP
                 "p-2 rounded text-sm transition-all",
                 "bg-secondary hover:bg-secondary/80 border border-border",
                 "text-foreground hover:shadow-md",
-                "flex flex-col items-start gap-1"
+                "flex flex-col items-start gap-1",
               )}
               title={`${preset.width} × ${preset.height} px`}
             >

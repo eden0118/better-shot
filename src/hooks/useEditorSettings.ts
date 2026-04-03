@@ -1,7 +1,13 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Store } from "@tauri-apps/plugin-store";
-import { gradientOptions, type GradientOption } from "@/components/editor/BackgroundSelector";
-import { resolveBackgroundPath, getDefaultBackgroundPath } from "@/lib/asset-registry";
+import {
+  gradientOptions,
+  type GradientOption,
+} from "@/components/editor/BackgroundSelector";
+import {
+  resolveBackgroundPath,
+  getDefaultBackgroundPath,
+} from "@/lib/asset-registry";
 
 // Import all background images
 import bgImage13 from "@/assets/bg-images/asset-13.jpg";
@@ -25,7 +31,14 @@ import macImage10 from "@/assets/mac/mac-asset-10.jpg";
 
 import type { AssetCategory } from "@/components/editor/AssetGrid";
 
-export type BackgroundType = "transparent" | "white" | "black" | "gray" | "gradient" | "custom" | "image";
+export type BackgroundType =
+  | "transparent"
+  | "white"
+  | "black"
+  | "gray"
+  | "gradient"
+  | "custom"
+  | "image";
 
 export interface ShadowSettings {
   blur: number;
@@ -99,18 +112,22 @@ export function useEditorSettings(): [EditorSettings, EditorSettingsActions] {
   // Background state
   const [backgroundType, setBackgroundType] = useState<BackgroundType>("image");
   const [customColor, setCustomColor] = useState("#667eea");
-  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(DEFAULT_IMAGE);
-  
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(
+    DEFAULT_IMAGE,
+  );
+
   // Store gradient as primitive values to avoid reference issues
   const [gradientId, setGradientId] = useState(DEFAULT_GRADIENT.id);
   const [gradientSrc, setGradientSrc] = useState(DEFAULT_GRADIENT.src);
-  const [gradientColors, setGradientColors] = useState<[string, string]>(DEFAULT_GRADIENT.colors);
-  
+  const [gradientColors, setGradientColors] = useState<[string, string]>(
+    DEFAULT_GRADIENT.colors,
+  );
+
   // Effects state
   const [blurAmount, setBlurAmount] = useState(0);
   const [noiseAmount, setNoiseAmount] = useState(0);
   const [borderRadius, setBorderRadius] = useState(12);
-  
+
   // Shadow state
   const [shadowBlur, setShadowBlur] = useState(33);
   const [shadowOffsetX, setShadowOffsetX] = useState(18);
@@ -122,10 +139,12 @@ export function useEditorSettings(): [EditorSettings, EditorSettingsActions] {
     const loadDefaultBackground = async () => {
       try {
         const store = await Store.load("settings.json");
-        const storedBgType = await store.get<BackgroundType>("defaultBackgroundType");
+        const storedBgType = await store.get<BackgroundType>(
+          "defaultBackgroundType",
+        );
         const storedCustomColor = await store.get<string>("defaultCustomColor");
         const storedBg = await store.get<string>("defaultBackgroundImage");
-        
+
         if (storedBgType) {
           setBackgroundType(storedBgType);
         }
@@ -141,7 +160,7 @@ export function useEditorSettings(): [EditorSettings, EditorSettingsActions] {
           if (storedBg.startsWith("gradient-")) {
             const gradientIndex = storedBg.replace("gradient-", "");
             const gradient = gradientOptions.find(
-              (option) => option.id === `mesh-${gradientIndex}`
+              (option) => option.id === `mesh-${gradientIndex}`,
             );
 
             if (gradient) {
@@ -157,37 +176,40 @@ export function useEditorSettings(): [EditorSettings, EditorSettingsActions] {
   }, []);
 
   // Memoized settings object - only changes when actual values change
-  const settings = useMemo<EditorSettings>(() => ({
-    backgroundType,
-    customColor,
-    selectedImageSrc,
-    gradientId,
-    gradientSrc,
-    gradientColors,
-    blurAmount,
-    noiseAmount,
-    borderRadius,
-    shadow: {
-      blur: shadowBlur,
-      offsetX: shadowOffsetX,
-      offsetY: shadowOffsetY,
-      opacity: shadowOpacity,
-    },
-  }), [
-    backgroundType,
-    customColor,
-    selectedImageSrc,
-    gradientId,
-    gradientSrc,
-    gradientColors,
-    blurAmount,
-    noiseAmount,
-    borderRadius,
-    shadowBlur,
-    shadowOffsetX,
-    shadowOffsetY,
-    shadowOpacity,
-  ]);
+  const settings = useMemo<EditorSettings>(
+    () => ({
+      backgroundType,
+      customColor,
+      selectedImageSrc,
+      gradientId,
+      gradientSrc,
+      gradientColors,
+      blurAmount,
+      noiseAmount,
+      borderRadius,
+      shadow: {
+        blur: shadowBlur,
+        offsetX: shadowOffsetX,
+        offsetY: shadowOffsetY,
+        opacity: shadowOpacity,
+      },
+    }),
+    [
+      backgroundType,
+      customColor,
+      selectedImageSrc,
+      gradientId,
+      gradientSrc,
+      gradientColors,
+      blurAmount,
+      noiseAmount,
+      borderRadius,
+      shadowBlur,
+      shadowOffsetX,
+      shadowOffsetY,
+      shadowOpacity,
+    ],
+  );
 
   // Actions
   const setGradient = useCallback((gradient: GradientOption) => {
@@ -205,20 +227,23 @@ export function useEditorSettings(): [EditorSettings, EditorSettingsActions] {
     setSelectedImageSrc(src);
   }, []);
 
-  const actions = useMemo<EditorSettingsActions>(() => ({
-    setBackgroundType,
-    setCustomColor,
-    setSelectedImage,
-    setGradient,
-    setBlurAmount,
-    setNoiseAmount,
-    setBorderRadius,
-    handleImageSelect,
-    setShadowBlur,
-    setShadowOffsetX,
-    setShadowOffsetY,
-    setShadowOpacity,
-  }), [setGradient, handleImageSelect, setSelectedImage]);
+  const actions = useMemo<EditorSettingsActions>(
+    () => ({
+      setBackgroundType,
+      setCustomColor,
+      setSelectedImage,
+      setGradient,
+      setBlurAmount,
+      setNoiseAmount,
+      setBorderRadius,
+      handleImageSelect,
+      setShadowBlur,
+      setShadowOffsetX,
+      setShadowOffsetY,
+      setShadowOpacity,
+    }),
+    [setGradient, handleImageSelect, setSelectedImage],
+  );
 
   return [settings, actions];
 }

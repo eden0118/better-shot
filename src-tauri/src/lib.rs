@@ -145,6 +145,39 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             {
                 use objc2::msg_send;
+                use objc2::runtime::Class;
+                use objc2_app_kit::NSWindow;
+
+                window
+                    .with_webview(|webview| {
+                        let ns_window = webview.ns_window();
+                        if ns_window.is_null() {
+                            return;
+                        }
+                        let ns_window = unsafe { &*ns_window.cast::<NSWindow>() };
+
+                        unsafe {
+                            // Set window appearance to dark
+                            let appearance_class = Class::get(c"NSAppearance");
+                            if let Some(cls) = appearance_class {
+                                // Create NSString for the appearance name
+                                let appearance_name_str = c"NSAppearanceNameDarkAqua";
+                                // Use msg_send to get the appearance
+                                let dark_appearance: *const objc2::runtime::Object =
+                                    msg_send![cls, appearanceNamed:appearance_name_str.as_ptr() as *const _];
+                                if !dark_appearance.is_null() {
+                                    let _: () = msg_send![ns_window, setAppearance:dark_appearance];
+                                }
+                            }
+                        }
+                    })
+                    .ok();
+            }
+
+            #[cfg(target_os = "macos")]
+            {
+                use objc2::msg_send;
+                use objc2::runtime::Class;
                 use objc2_app_kit::NSWindow;
 
                 overlay
@@ -156,6 +189,19 @@ pub fn run() {
                         let ns_window = unsafe { &*ns_window.cast::<NSWindow>() };
 
                         unsafe {
+                            // Set window appearance to dark
+                            let appearance_class = Class::get(c"NSAppearance");
+                            if let Some(cls) = appearance_class {
+                                // Create NSString for the appearance name
+                                let appearance_name_str = c"NSAppearanceNameDarkAqua";
+                                // Use msg_send to get the appearance
+                                let dark_appearance: *const objc2::runtime::Object =
+                                    msg_send![cls, appearanceNamed:appearance_name_str.as_ptr() as *const _];
+                                if !dark_appearance.is_null() {
+                                    let _: () = msg_send![ns_window, setAppearance:dark_appearance];
+                                }
+                            }
+
                             let collection_behavior: usize = 1 << 7;
                             let current: usize = msg_send![ns_window, collectionBehavior];
                             let new_behavior = current | collection_behavior;

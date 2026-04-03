@@ -14,4 +14,9 @@ export {
   editorActions,
 } from "./editorStore";
 
-export type { EditorStore, EditorSettings, ShadowSettings, BackgroundType } from "./editorStore";
+export type {
+  EditorStore,
+  EditorSettings,
+  ShadowSettings,
+  BackgroundType,
+} from "./editorStore";

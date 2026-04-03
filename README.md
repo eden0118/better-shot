@@ -2,7 +2,7 @@
 
 <img width="3600" height="2025" alt="stage-1768238789948" src="https://github.com/user-attachments/assets/3051266a-5179-440f-a747-7980abd7bac3" />
 
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/zThjstVs) 
+[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/zThjstVs)
 [![X (Twitter)](https://img.shields.io/badge/X-%231DA1F2.svg?style=for-the-badge&logo=X&logoColor=white)](https://x.com/code_kartik)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-%23FFDD00.svg?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/code_kartik)
 
@@ -159,24 +159,24 @@ Capture shortcuts are customizable in Preferences.
 
 #### Capture Shortcuts
 
-| Action | Default Shortcut |
-| --- | --- |
-| Capture Region | `⌘⇧2` |
+| Action             | Default Shortcut            |
+| ------------------ | --------------------------- |
+| Capture Region     | `⌘⇧2`                       |
 | Capture Fullscreen | `⌘⇧F` (disabled by default) |
-| Capture Window | `⌘⇧D` (disabled by default) |
-| OCR Region | `⌘⇧O` (disabled by default) |
-| Cancel Selection | `Esc` |
+| Capture Window     | `⌘⇧D` (disabled by default) |
+| OCR Region         | `⌘⇧O` (disabled by default) |
+| Cancel Selection   | `Esc`                       |
 
 #### Editor Shortcuts
 
-| Action | Shortcut |
-| --- | --- |
-| Save Image | `⌘S` |
-| Copy to Clipboard | `⇧⌘C` |
-| Undo | `⌘Z` |
-| Redo | `⇧⌘Z` |
+| Action            | Shortcut                |
+| ----------------- | ----------------------- |
+| Save Image        | `⌘S`                    |
+| Copy to Clipboard | `⇧⌘C`                   |
+| Undo              | `⌘Z`                    |
+| Redo              | `⇧⌘Z`                   |
 | Delete Annotation | `Delete` or `Backspace` |
-| Close Editor | `Esc` |
+| Close Editor      | `Esc`                   |
 
 ## Development
 

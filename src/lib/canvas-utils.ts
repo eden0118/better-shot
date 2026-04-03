@@ -2,7 +2,14 @@ import type { ShadowSettings } from "@/hooks/useEditorSettings";
 
 export interface RenderOptions {
   image: HTMLImageElement;
-  backgroundType: "transparent" | "white" | "black" | "gray" | "gradient" | "custom" | "image";
+  backgroundType:
+    | "transparent"
+    | "white"
+    | "black"
+    | "gray"
+    | "gradient"
+    | "custom"
+    | "image";
   customColor: string;
   selectedImage: string | null;
   bgImage: HTMLImageElement | null;
@@ -18,7 +25,9 @@ export interface RenderOptions {
   shadow?: ShadowSettings;
 }
 
-export function createHighQualityCanvas(options: RenderOptions): HTMLCanvasElement {
+export function createHighQualityCanvas(
+  options: RenderOptions,
+): HTMLCanvasElement {
   const {
     image,
     backgroundType,
@@ -69,7 +78,16 @@ export function createHighQualityCanvas(options: RenderOptions): HTMLCanvasEleme
     const tempBgCtx = tempBgCanvas.getContext("2d");
     if (!tempBgCtx) throw new Error("Failed to get temp canvas context");
 
-    drawBackground(tempBgCtx, bgWidth, bgHeight, backgroundType, customColor, selectedImage, bgImage, gradientImage);
+    drawBackground(
+      tempBgCtx,
+      bgWidth,
+      bgHeight,
+      backgroundType,
+      customColor,
+      selectedImage,
+      bgImage,
+      gradientImage,
+    );
 
     if (blurAmount > 0) {
       applyGaussianBlurToCanvas(tempBgCanvas, blurAmount);
@@ -129,7 +147,7 @@ function drawBackground(
   customColor: string,
   selectedImage: string | null,
   bgImage: HTMLImageElement | null,
-  gradientImage: HTMLImageElement | null
+  gradientImage: HTMLImageElement | null,
 ) {
   switch (backgroundType) {
     case "transparent": {
@@ -177,25 +195,28 @@ function drawBackground(
  */
 function applyGaussianBlurToCanvas(canvas: HTMLCanvasElement, radius: number) {
   if (radius <= 0) return;
-  
+
   const passes = Math.min(Math.ceil(radius / 12) + 1, 4);
   const boxRadius = Math.floor(radius / passes);
-  
+
   if (boxRadius <= 0) return;
-  
+
   const ctx = canvas.getContext("2d")!;
   const width = canvas.width;
   const height = canvas.height;
   const kernelSize = boxRadius * 2 + 1;
-  
+
   for (let pass = 0; pass < passes; pass++) {
     const imageData = ctx.getImageData(0, 0, width, height);
     const data = imageData.data;
     const tempData = new Uint8ClampedArray(data);
-    
+
     for (let y = 0; y < height; y++) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-      
+      let rSum = 0,
+        gSum = 0,
+        bSum = 0,
+        aSum = 0;
+
       for (let x = 0; x < width; x++) {
         if (x === 0) {
           for (let kx = -boxRadius; kx <= boxRadius; kx++) {
@@ -211,13 +232,13 @@ function applyGaussianBlurToCanvas(canvas: HTMLCanvasElement, radius: number) {
           const addX = Math.max(0, Math.min(width - 1, x + boxRadius));
           const removeIdx = (y * width + removeX) * 4;
           const addIdx = (y * width + addX) * 4;
-          
+
           rSum = rSum - data[removeIdx] + data[addIdx];
           gSum = gSum - data[removeIdx + 1] + data[addIdx + 1];
           bSum = bSum - data[removeIdx + 2] + data[addIdx + 2];
           aSum = aSum - data[removeIdx + 3] + data[addIdx + 3];
         }
-        
+
         const idx = (y * width + x) * 4;
         tempData[idx] = Math.round(rSum / kernelSize);
         tempData[idx + 1] = Math.round(gSum / kernelSize);
@@ -225,12 +246,15 @@ function applyGaussianBlurToCanvas(canvas: HTMLCanvasElement, radius: number) {
         tempData[idx + 3] = Math.round(aSum / kernelSize);
       }
     }
-    
+
     const finalData = new Uint8ClampedArray(tempData);
-    
+
     for (let x = 0; x < width; x++) {
-      let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-      
+      let rSum = 0,
+        gSum = 0,
+        bSum = 0,
+        aSum = 0;
+
       for (let y = 0; y < height; y++) {
         if (y === 0) {
           for (let ky = -boxRadius; ky <= boxRadius; ky++) {
@@ -246,13 +270,13 @@ function applyGaussianBlurToCanvas(canvas: HTMLCanvasElement, radius: number) {
           const addY = Math.max(0, Math.min(height - 1, y + boxRadius));
           const removeIdx = (removeY * width + x) * 4;
           const addIdx = (addY * width + x) * 4;
-          
+
           rSum = rSum - tempData[removeIdx] + tempData[addIdx];
           gSum = gSum - tempData[removeIdx + 1] + tempData[addIdx + 1];
           bSum = bSum - tempData[removeIdx + 2] + tempData[addIdx + 2];
           aSum = aSum - tempData[removeIdx + 3] + tempData[addIdx + 3];
         }
-        
+
         const idx = (y * width + x) * 4;
         finalData[idx] = Math.round(rSum / kernelSize);
         finalData[idx + 1] = Math.round(gSum / kernelSize);
@@ -260,7 +284,7 @@ function applyGaussianBlurToCanvas(canvas: HTMLCanvasElement, radius: number) {
         finalData[idx + 3] = Math.round(aSum / kernelSize);
       }
     }
-    
+
     ctx.putImageData(new ImageData(finalData, width, height), 0, 0);
   }
 }
@@ -269,7 +293,7 @@ function applyNoiseToBackground(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  amount: number
+  amount: number,
 ) {
   if (amount === 0) return;
 

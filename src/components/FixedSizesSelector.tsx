@@ -15,32 +15,134 @@ export interface FixedSize {
 // Common standard sizes grouped by category
 const FIXED_SIZES: FixedSize[] = [
   // Desktop / Monitor
-  { id: "1920x1080", name: "Full HD", width: 1920, height: 1080, category: "Desktop" },
-  { id: "2560x1440", name: "QHD", width: 2560, height: 1440, category: "Desktop" },
-  { id: "3840x2160", name: "4K", width: 3840, height: 2160, category: "Desktop" },
+  {
+    id: "1920x1080",
+    name: "Full HD",
+    width: 1920,
+    height: 1080,
+    category: "Desktop",
+  },
+  {
+    id: "2560x1440",
+    name: "QHD",
+    width: 2560,
+    height: 1440,
+    category: "Desktop",
+  },
+  {
+    id: "3840x2160",
+    name: "4K",
+    width: 3840,
+    height: 2160,
+    category: "Desktop",
+  },
   { id: "1280x720", name: "HD", width: 1280, height: 720, category: "Desktop" },
 
   // Social Media
-  { id: "1200x630", name: "Facebook", width: 1200, height: 630, category: "Social" },
-  { id: "1200x627", name: "LinkedIn", width: 1200, height: 627, category: "Social" },
-  { id: "1080x1080", name: "Instagram Square", width: 1080, height: 1080, category: "Social" },
-  { id: "1080x1350", name: "Instagram Portrait", width: 1080, height: 1350, category: "Social" },
-  { id: "1200x675", name: "Twitter", width: 1200, height: 675, category: "Social" },
+  {
+    id: "1200x630",
+    name: "Facebook",
+    width: 1200,
+    height: 630,
+    category: "Social",
+  },
+  {
+    id: "1200x627",
+    name: "LinkedIn",
+    width: 1200,
+    height: 627,
+    category: "Social",
+  },
+  {
+    id: "1080x1080",
+    name: "Instagram Square",
+    width: 1080,
+    height: 1080,
+    category: "Social",
+  },
+  {
+    id: "1080x1350",
+    name: "Instagram Portrait",
+    width: 1080,
+    height: 1350,
+    category: "Social",
+  },
+  {
+    id: "1200x675",
+    name: "Twitter",
+    width: 1200,
+    height: 675,
+    category: "Social",
+  },
 
   // Mobile
-  { id: "750x1334", name: "iPhone 8/SE", width: 750, height: 1334, category: "Mobile" },
-  { id: "1125x2436", name: "iPhone X/12/13", width: 1125, height: 2436, category: "Mobile" },
-  { id: "1170x2532", name: "iPhone 14/15", width: 1170, height: 2532, category: "Mobile" },
-  { id: "1440x3120", name: "Android (Samsung)", width: 1440, height: 3120, category: "Mobile" },
+  {
+    id: "750x1334",
+    name: "iPhone 8/SE",
+    width: 750,
+    height: 1334,
+    category: "Mobile",
+  },
+  {
+    id: "1125x2436",
+    name: "iPhone X/12/13",
+    width: 1125,
+    height: 2436,
+    category: "Mobile",
+  },
+  {
+    id: "1170x2532",
+    name: "iPhone 14/15",
+    width: 1170,
+    height: 2532,
+    category: "Mobile",
+  },
+  {
+    id: "1440x3120",
+    name: "Android (Samsung)",
+    width: 1440,
+    height: 3120,
+    category: "Mobile",
+  },
 
   // Tablet
-  { id: "2048x1536", name: "iPad", width: 2048, height: 1536, category: "Tablet" },
-  { id: "1024x768", name: "iPad Mini", width: 1024, height: 768, category: "Tablet" },
+  {
+    id: "2048x1536",
+    name: "iPad",
+    width: 2048,
+    height: 1536,
+    category: "Tablet",
+  },
+  {
+    id: "1024x768",
+    name: "iPad Mini",
+    width: 1024,
+    height: 768,
+    category: "Tablet",
+  },
 
   // Video / Content
-  { id: "1920x1080", name: "YouTube Thumbnail", width: 1280, height: 720, category: "Video" },
-  { id: "3840x2160", name: "4K Video", width: 3840, height: 2160, category: "Video" },
-  { id: "1280x1024", name: "SXGA", width: 1280, height: 1024, category: "Desktop" },
+  {
+    id: "1920x1080",
+    name: "YouTube Thumbnail",
+    width: 1280,
+    height: 720,
+    category: "Video",
+  },
+  {
+    id: "3840x2160",
+    name: "4K Video",
+    width: 3840,
+    height: 2160,
+    category: "Video",
+  },
+  {
+    id: "1280x1024",
+    name: "SXGA",
+    width: 1280,
+    height: 1024,
+    category: "Desktop",
+  },
 ];
 
 interface FixedSizesSelectorProps {
@@ -48,9 +150,12 @@ interface FixedSizesSelectorProps {
   onCancel: () => void;
 }
 
-export function FixedSizesSelector({ onSelectSize, onCancel }: FixedSizesSelectorProps) {
+export function FixedSizesSelector({
+  onSelectSize,
+  onCancel,
+}: FixedSizesSelectorProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(["Desktop", "Social"])
+    new Set(["Desktop", "Social"]),
   );
   const [customWidth, setCustomWidth] = useState("");
   const [customHeight, setCustomHeight] = useState("");
@@ -111,7 +216,9 @@ export function FixedSizesSelector({ onSelectSize, onCancel }: FixedSizesSelecto
         <CardContent className="p-6 space-y-4 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Select Fixed Size</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                Select Fixed Size
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Choose a preset size for your screenshot
               </p>
@@ -130,7 +237,9 @@ export function FixedSizesSelector({ onSelectSize, onCancel }: FixedSizesSelecto
             <h3 className="text-sm font-medium text-foreground">Custom Size</h3>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground block">Width (px)</label>
+                <label className="text-xs text-muted-foreground block">
+                  Width (px)
+                </label>
                 <input
                   type="number"
                   value={customWidth}
@@ -150,7 +259,9 @@ export function FixedSizesSelector({ onSelectSize, onCancel }: FixedSizesSelecto
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground block">Height (px)</label>
+                <label className="text-xs text-muted-foreground block">
+                  Height (px)
+                </label>
                 <input
                   type="number"
                   value={customHeight}
@@ -205,7 +316,9 @@ export function FixedSizesSelector({ onSelectSize, onCancel }: FixedSizesSelecto
                       )}
                       {category}
                     </span>
-                    <span className="text-xs text-muted-foreground">{sizes.length}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {sizes.length}
+                    </span>
                   </button>
 
                   {isExpanded && (
@@ -218,7 +331,7 @@ export function FixedSizesSelector({ onSelectSize, onCancel }: FixedSizesSelecto
                             "p-3 rounded-lg text-sm transition-all border",
                             "bg-secondary hover:bg-secondary/80 border-border",
                             "hover:shadow-md text-foreground",
-                            "flex flex-col items-start gap-1 text-left"
+                            "flex flex-col items-start gap-1 text-left",
                           )}
                           title={`${size.width} × ${size.height} px`}
                         >

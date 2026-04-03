@@ -13,13 +13,22 @@ import {
   toStorableValue,
 } from "@/lib/asset-registry";
 
-type BackgroundType = "transparent" | "white" | "black" | "gray" | "custom" | "image" | "gradient";
+type BackgroundType =
+  | "transparent"
+  | "white"
+  | "black"
+  | "gray"
+  | "custom"
+  | "image"
+  | "gradient";
 
 interface BackgroundImageSelectorProps {
   onImageSelect: (imageSrc: string) => void;
 }
 
-export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelectorProps) {
+export function BackgroundImageSelector({
+  onImageSelect,
+}: BackgroundImageSelectorProps) {
   const [backgroundType, setBackgroundType] = useState<BackgroundType>("image");
   const [customColor, setCustomColor] = useState("#667eea");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -33,28 +42,33 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
   ];
 
   // Helper to check if an asset is selected (compares by ID)
-  const isSelected = useCallback((assetSrc: string): boolean => {
-    if (!selectedImage) return false;
-    
-    // For data URLs (uploaded images), compare directly
-    if (isDataUrl(assetSrc)) {
-      return selectedImage === assetSrc;
-    }
-    
-    // For registry assets, compare by asset ID
-    const assetId = getAssetIdFromPath(assetSrc);
-    return assetId === selectedImage;
-  }, [selectedImage]);
+  const isSelected = useCallback(
+    (assetSrc: string): boolean => {
+      if (!selectedImage) return false;
+
+      // For data URLs (uploaded images), compare directly
+      if (isDataUrl(assetSrc)) {
+        return selectedImage === assetSrc;
+      }
+
+      // For registry assets, compare by asset ID
+      const assetId = getAssetIdFromPath(assetSrc);
+      return assetId === selectedImage;
+    },
+    [selectedImage],
+  );
 
   useEffect(() => {
     const loadSettings = async () => {
       try {
         const store = await Store.load("settings.json");
-        const storedBgType = await store.get<BackgroundType>("defaultBackgroundType");
+        const storedBgType = await store.get<BackgroundType>(
+          "defaultBackgroundType",
+        );
         const storedCustomColor = await store.get<string>("defaultCustomColor");
         const storedBg = await store.get<string>("defaultBackgroundImage");
         const uploaded = await store.get<string[]>("uploadedBackgroundImages");
-        
+
         if (storedBgType) {
           setBackgroundType(storedBgType);
         }
@@ -74,35 +88,38 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
     loadSettings();
   }, []);
 
-  const handleImageSelect = useCallback(async (imageSrc: string) => {
-    const storableValue = toStorableValue(imageSrc);
-    
-    if (!storableValue) {
-      console.error("Cannot store this image path:", imageSrc);
-      toast.error("Failed to save background selection");
-      return;
-    }
-    
-    setBackgroundType("image");
-    setSelectedImage(storableValue);
-    onImageSelect(imageSrc);
-    
-    try {
-      const store = await Store.load("settings.json");
-      await store.set("defaultBackgroundType", "image");
-      await store.set("defaultBackgroundImage", storableValue);
-      await store.save();
-      toast.success("Default background updated");
-    } catch (err) {
-      console.error("Failed to save default background:", err);
-      toast.error("Failed to save default background");
-    }
-  }, [onImageSelect]);
+  const handleImageSelect = useCallback(
+    async (imageSrc: string) => {
+      const storableValue = toStorableValue(imageSrc);
+
+      if (!storableValue) {
+        console.error("Cannot store this image path:", imageSrc);
+        toast.error("Failed to save background selection");
+        return;
+      }
+
+      setBackgroundType("image");
+      setSelectedImage(storableValue);
+      onImageSelect(imageSrc);
+
+      try {
+        const store = await Store.load("settings.json");
+        await store.set("defaultBackgroundType", "image");
+        await store.set("defaultBackgroundImage", storableValue);
+        await store.save();
+        toast.success("Default background updated");
+      } catch (err) {
+        console.error("Failed to save default background:", err);
+        toast.error("Failed to save default background");
+      }
+    },
+    [onImageSelect],
+  );
 
   const handleSolidColorSelect = useCallback(async (type: BackgroundType) => {
     setBackgroundType(type);
     setSelectedImage(null);
-    
+
     try {
       const store = await Store.load("settings.json");
       await store.set("defaultBackgroundType", type);
@@ -121,7 +138,7 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
     setCustomColor(color);
     setBackgroundType("custom");
     setSelectedImage(null);
-    
+
     try {
       const store = await Store.load("settings.json");
       await store.set("defaultBackgroundType", "custom");
@@ -135,62 +152,70 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
     }
   }, []);
 
-  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
-    }
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
+        return;
+      }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const dataUrl = reader.result as string;
-      const newUploadedImages = [...uploadedImages, dataUrl];
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const dataUrl = reader.result as string;
+        const newUploadedImages = [...uploadedImages, dataUrl];
+        setUploadedImages(newUploadedImages);
+
+        try {
+          const store = await Store.load("settings.json");
+          await store.set("uploadedBackgroundImages", newUploadedImages);
+          await store.save();
+          toast.success("Image uploaded successfully");
+        } catch (err) {
+          console.error("Failed to save uploaded image:", err);
+          toast.error("Failed to save uploaded image");
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Failed to read image file");
+      };
+      reader.readAsDataURL(file);
+
+      event.target.value = "";
+    },
+    [uploadedImages],
+  );
+
+  const handleRemoveUploaded = useCallback(
+    async (index: number) => {
+      const newUploadedImages = uploadedImages.filter((_, i) => i !== index);
       setUploadedImages(newUploadedImages);
-      
+
+      if (selectedImage === uploadedImages[index]) {
+        setSelectedImage(null);
+      }
+
       try {
         const store = await Store.load("settings.json");
         await store.set("uploadedBackgroundImages", newUploadedImages);
         await store.save();
-        toast.success("Image uploaded successfully");
+        toast.success("Image removed");
       } catch (err) {
-        console.error("Failed to save uploaded image:", err);
-        toast.error("Failed to save uploaded image");
+        console.error("Failed to remove image:", err);
+        toast.error("Failed to remove image");
       }
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read image file");
-    };
-    reader.readAsDataURL(file);
-    
-    event.target.value = "";
-  }, [uploadedImages]);
-
-  const handleRemoveUploaded = useCallback(async (index: number) => {
-    const newUploadedImages = uploadedImages.filter((_, i) => i !== index);
-    setUploadedImages(newUploadedImages);
-    
-    if (selectedImage === uploadedImages[index]) {
-      setSelectedImage(null);
-    }
-    
-    try {
-      const store = await Store.load("settings.json");
-      await store.set("uploadedBackgroundImages", newUploadedImages);
-      await store.save();
-      toast.success("Image removed");
-    } catch (err) {
-      console.error("Failed to remove image:", err);
-      toast.error("Failed to remove image");
-    }
-  }, [uploadedImages, selectedImage]);
+    },
+    [uploadedImages, selectedImage],
+  );
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-foreground">Default Background</label>
+        <label className="text-sm font-medium text-foreground">
+          Default Background
+        </label>
         <div>
           <input
             ref={fileInputRef}
@@ -213,7 +238,9 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Solid</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            Solid
+          </span>
           <div className="flex gap-2">
             {solidColors.map(({ type, color }) => (
               <button
@@ -224,7 +251,7 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                   "size-10 rounded-lg transition-all",
                   backgroundType === type
                     ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-card"
-                    : "ring-1 ring-border hover:ring-ring"
+                    : "ring-1 ring-border hover:ring-ring",
                 )}
                 style={{ backgroundColor: color }}
                 title={type.charAt(0).toUpperCase() + type.slice(1)}
@@ -238,7 +265,7 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                   "size-10 rounded-lg transition-all",
                   backgroundType === "custom"
                     ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-card"
-                    : "ring-1 ring-border hover:ring-ring"
+                    : "ring-1 ring-border hover:ring-ring",
                 )}
                 style={{ backgroundColor: customColor }}
                 title="Custom color"
@@ -254,7 +281,9 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
         </div>
 
         <div className="space-y-2">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Transparent</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            Transparent
+          </span>
           <div className="flex gap-2">
             <button
               onClick={() => handleSolidColorSelect("transparent")}
@@ -263,7 +292,7 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                 "size-10 rounded-lg transition-all bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImNoZWNrZXJib2FyZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iNSIgd2lkdGg9IjUiIGhlaWdodD0iNSIgZmlsbD0iI2UwZTBlMCIvPjxyZWN0IHk9IjUiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiNlMGUwZTAiLz48cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIGZpbGw9InVybCgjY2hlY2tlcmJvYXJkKSIvPjwvc3ZnPg==')]",
                 backgroundType === "transparent"
                   ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-card"
-                  : ""
+                  : "",
               )}
               title="Transparent"
             />
@@ -271,7 +300,9 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
         </div>
 
         <div className="space-y-2">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Gradients</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            Gradients
+          </span>
           <div className="grid grid-cols-7 gap-2">
             {gradientOptions.map((gradient) => {
               const gradientId = gradient.id.replace("mesh-", "gradient-");
@@ -303,7 +334,7 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                     "relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all",
                     backgroundType === "gradient" && isGradientSelected
                       ? "border-blue-500 ring-2 ring-blue-500/50"
-                      : "border-border hover:border-ring"
+                      : "border-border hover:border-ring",
                   )}
                   title={gradient.name}
                 >
@@ -314,7 +345,10 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                   />
                   {backgroundType === "gradient" && isGradientSelected && (
                     <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                      <Check className="size-5 text-blue-400" aria-hidden="true" />
+                      <Check
+                        className="size-5 text-blue-400"
+                        aria-hidden="true"
+                      />
                     </div>
                   )}
                 </button>
@@ -326,7 +360,9 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
         <div className="space-y-3">
           {uploadedImages.length > 0 && (
             <div>
-              <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Uploaded Images</h4>
+              <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                Uploaded Images
+              </h4>
               <div className="grid grid-cols-7 gap-2">
                 {uploadedImages.map((img, index) => (
                   <div key={index} className="relative group">
@@ -336,7 +372,7 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                         "relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all",
                         backgroundType === "image" && isSelected(img)
                           ? "border-blue-500 ring-2 ring-blue-500/50"
-                          : "border-border hover:border-ring"
+                          : "border-border hover:border-ring",
                       )}
                     >
                       <img
@@ -346,7 +382,10 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                       />
                       {backgroundType === "image" && isSelected(img) && (
                         <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                          <Check className="size-5 text-blue-400" aria-hidden="true" />
+                          <Check
+                            className="size-5 text-blue-400"
+                            aria-hidden="true"
+                          />
                         </div>
                       )}
                     </button>
@@ -365,7 +404,9 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
 
           {assetCategories.map((category) => (
             <div key={category.name}>
-              <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{category.name}</h4>
+              <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                {category.name}
+              </h4>
               <div className="grid grid-cols-7 gap-2">
                 {category.assets.map((asset) => (
                   <button
@@ -375,7 +416,7 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                       "relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all",
                       backgroundType === "image" && isSelected(asset.src)
                         ? "border-blue-500 ring-2 ring-blue-500/50"
-                        : "border-border hover:border-ring"
+                        : "border-border hover:border-ring",
                     )}
                   >
                     <img
@@ -385,7 +426,10 @@ export function BackgroundImageSelector({ onImageSelect }: BackgroundImageSelect
                     />
                     {backgroundType === "image" && isSelected(asset.src) && (
                       <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                        <Check className="size-5 text-blue-400" aria-hidden="true" />
+                        <Check
+                          className="size-5 text-blue-400"
+                          aria-hidden="true"
+                        />
                       </div>
                     )}
                   </button>

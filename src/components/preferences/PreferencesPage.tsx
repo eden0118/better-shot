@@ -61,38 +61,47 @@ export function PreferencesPage({ onSettingsChange }: PreferencesPageProps) {
     loadSettings();
   }, []);
 
-  const updateSetting = useCallback(async <K extends keyof GeneralSettings>(
-    key: K,
-    value: GeneralSettings[K]
-  ) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const updateSetting = useCallback(
+    async <K extends keyof GeneralSettings>(
+      key: K,
+      value: GeneralSettings[K],
+    ) => {
+      setSettings((prev) => ({ ...prev, [key]: value }));
 
-    try {
-      const store = await Store.load("settings.json");
-      await store.set(key, value);
-      await store.save();
+      try {
+        const store = await Store.load("settings.json");
+        await store.set(key, value);
+        await store.save();
+        onSettingsChange?.();
+      } catch (err) {
+        console.error(`Failed to save ${key}:`, err);
+        toast.error(`Failed to save setting`);
+      }
+    },
+    [onSettingsChange],
+  );
+
+  const handleShortcutsChange = useCallback(
+    (_shortcuts: KeyboardShortcut[]) => {
+      // Notify parent to re-register shortcuts
       onSettingsChange?.();
-    } catch (err) {
-      console.error(`Failed to save ${key}:`, err);
-      toast.error(`Failed to save setting`);
-    }
-  }, [onSettingsChange]);
+    },
+    [onSettingsChange],
+  );
 
-  const handleShortcutsChange = useCallback((_shortcuts: KeyboardShortcut[]) => {
-    // Notify parent to re-register shortcuts
-    onSettingsChange?.();
-  }, [onSettingsChange]);
-
-  const handleImageSelect = useCallback(async (_imageSrc: string) => {
-    try {
-      // The BackgroundImageSelector now handles converting to storable value
-      // and saving to store, so we just need to notify of the change
-      onSettingsChange?.();
-    } catch (err) {
-      console.error("Failed to save default background:", err);
-      toast.error("Failed to save default background");
-    }
-  }, [onSettingsChange]);
+  const handleImageSelect = useCallback(
+    async (_imageSrc: string) => {
+      try {
+        // The BackgroundImageSelector now handles converting to storable value
+        // and saving to store, so we just need to notify of the change
+        onSettingsChange?.();
+      } catch (err) {
+        console.error("Failed to save default background:", err);
+        toast.error("Failed to save default background");
+      }
+    },
+    [onSettingsChange],
+  );
 
   if (isLoading) {
     return (
@@ -105,113 +114,151 @@ export function PreferencesPage({ onSettingsChange }: PreferencesPageProps) {
   return (
     <div className="space-y-6">
       {/* General Settings */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-card-foreground">General</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {/* Save Directory */}
-            <div className="space-y-2">
-              <label htmlFor="save-dir" className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Folder className="size-4" aria-hidden="true" />
-                Save Directory
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold text-card-foreground">
+            General
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Save Directory */}
+          <div className="space-y-2">
+            <label
+              htmlFor="save-dir"
+              className="text-sm font-medium text-foreground flex items-center gap-2"
+            >
+              <Folder className="size-4" aria-hidden="true" />
+              Save Directory
+            </label>
+            <input
+              id="save-dir"
+              type="text"
+              value={settings.saveDir}
+              onChange={(e) => updateSetting("saveDir", e.target.value)}
+              placeholder="Enter save directory path (e.g., ~/Desktop)"
+              className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-mono text-sm"
+            />
+            <p className="text-xs text-foreground0">
+              Screenshots will be saved to this directory
+            </p>
+          </div>
+
+          {/* Copy to Clipboard */}
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <label
+                htmlFor="copy-clipboard"
+                className="text-sm font-medium text-foreground cursor-pointer block"
+              >
+                Copy to clipboard
               </label>
-              <input
-                id="save-dir"
-                type="text"
-                value={settings.saveDir}
-                onChange={(e) => updateSetting("saveDir", e.target.value)}
-                placeholder="Enter save directory path (e.g., ~/Desktop)"
-                className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-card-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-mono text-sm"
-              />
-              <p className="text-xs text-foreground0">Screenshots will be saved to this directory</p>
+              <p className="text-xs text-foreground0">
+                Automatically copy screenshots to clipboard after saving
+              </p>
             </div>
+            <Switch
+              id="copy-clipboard"
+              checked={settings.copyToClipboard}
+              onCheckedChange={(checked) =>
+                updateSetting("copyToClipboard", checked)
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* Copy to Clipboard */}
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <label htmlFor="copy-clipboard" className="text-sm font-medium text-foreground cursor-pointer block">
-                  Copy to clipboard
-                </label>
-                <p className="text-xs text-foreground0">Automatically copy screenshots to clipboard after saving</p>
-              </div>
-              <Switch
-                id="copy-clipboard"
-                checked={settings.copyToClipboard}
-                onCheckedChange={(checked) => updateSetting("copyToClipboard", checked)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Default Background */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold text-card-foreground">
+            Default Background
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BackgroundImageSelector onImageSelect={handleImageSelect} />
+        </CardContent>
+      </Card>
 
-        {/* Default Background */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-card-foreground">Default Background</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BackgroundImageSelector onImageSelect={handleImageSelect} />
-          </CardContent>
-        </Card>
+      {/* Preset Screenshot Sizes */}
+      <PresetSizesManager />
 
-        {/* Preset Screenshot Sizes */}
-        <PresetSizesManager />
+      {/* Keyboard Shortcuts */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold text-card-foreground">
+            Keyboard Shortcuts
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <KeyboardShortcutManager onShortcutsChange={handleShortcutsChange} />
 
-        {/* Keyboard Shortcuts */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-card-foreground">Keyboard Shortcuts</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <KeyboardShortcutManager onShortcutsChange={handleShortcutsChange} />
-
-            {/* Editor Shortcuts Reference */}
-            <div className="space-y-3 pt-4 border-t border-border">
-              <div>
-                <p className="text-xs text-foreground0 uppercase tracking-wide mb-3">Editor</p>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Save</span>
-                    <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘S</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Copy</span>
-                    <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⇧⌘C</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Undo</span>
-                    <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘Z</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Redo</span>
-                    <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⇧⌘Z</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Delete annotation</span>
-                    <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌫</kbd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Close editor</span>
-                    <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">Esc</kbd>
-                  </div>
+          {/* Editor Shortcuts Reference */}
+          <div className="space-y-3 pt-4 border-t border-border">
+            <div>
+              <p className="text-xs text-foreground0 uppercase tracking-wide mb-3">
+                Editor
+              </p>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Save</span>
+                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
+                    ⌘S
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Copy</span>
+                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
+                    ⇧⌘C
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Undo</span>
+                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
+                    ⌘Z
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Redo</span>
+                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
+                    ⇧⌘Z
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    Delete annotation
+                  </span>
+                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
+                    ⌫
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Close editor</span>
+                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
+                    Esc
+                  </kbd>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* About */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-card-foreground">About</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-foreground">Better Shot</p>
-              <p className="text-xs text-foreground0">Version {__APP_VERSION__}</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* About */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold text-card-foreground">
+            About
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-sm font-medium text-foreground">Better Shot</p>
+            <p className="text-xs text-foreground0">
+              Version {__APP_VERSION__}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

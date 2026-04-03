@@ -12,7 +12,8 @@ export interface PresetSize {
 const DEFAULT_PRESET_SIZES: PresetSize[] = [];
 
 export function usePresetSizes() {
-  const [presetSizes, setPresetSizes] = useState<PresetSize[]>(DEFAULT_PRESET_SIZES);
+  const [presetSizes, setPresetSizes] =
+    useState<PresetSize[]>(DEFAULT_PRESET_SIZES);
   const [isLoading, setIsLoading] = useState(true);
   const storeRef = useRef<Store | null>(null);
 
@@ -72,7 +73,7 @@ export function usePresetSizes() {
         setPresetSizes(presetSizes);
       }
     },
-    [presetSizes]
+    [presetSizes],
   );
 
   // Update preset size
@@ -89,7 +90,7 @@ export function usePresetSizes() {
       }
 
       const updated = presetSizes.map((p) =>
-        p.id === id ? { ...p, name: name.trim(), width, height } : p
+        p.id === id ? { ...p, name: name.trim(), width, height } : p,
       );
       setPresetSizes(updated);
 
@@ -105,7 +106,7 @@ export function usePresetSizes() {
         setPresetSizes(presetSizes);
       }
     },
-    [presetSizes]
+    [presetSizes],
   );
 
   // Delete preset size
@@ -126,7 +127,7 @@ export function usePresetSizes() {
         setPresetSizes(presetSizes);
       }
     },
-    [presetSizes]
+    [presetSizes],
   );
 
   return {

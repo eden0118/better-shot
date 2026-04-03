@@ -6,7 +6,7 @@ import path from "path";
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
-// eslint-disable-next-line no-undef
+ 
 export default defineConfig(async () => ({
   plugins: [react(), tailwindcss()],
   define: {

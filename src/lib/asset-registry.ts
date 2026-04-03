@@ -1,11 +1,11 @@
 /**
  * Asset Registry
- * 
+ *
  * This module provides a centralized way to look up bundled assets by ID.
  * We store asset IDs in settings instead of runtime paths because:
  * - In development, Vite serves assets from /src/assets/...
  * - In production, assets are bundled with hashed names like /assets/asset-18-abc123.jpg
- * 
+ *
  * By storing IDs and looking up paths at runtime, we avoid path mismatches
  * between development and production builds.
  */
@@ -65,7 +65,7 @@ export const assetRegistry: Record<string, string> = {
   "bg-28": bgImage28,
   "bg-29": bgImage29,
   "bg-30": bgImage30,
-  
+
   // Mac assets
   "mac-3": macImage3,
   "mac-5": macImage5,
@@ -74,7 +74,7 @@ export const assetRegistry: Record<string, string> = {
   "mac-8": macImage8,
   "mac-9": macImage9,
   "mac-10": macImage10,
-  
+
   // Gradients
   "gradient-1": gradient1,
   "gradient-2": gradient2,
@@ -133,40 +133,46 @@ export function resolveBackgroundPath(storedValue: string | null): string {
   if (!storedValue) {
     return getDefaultBackgroundPath();
   }
-  
+
   // If it's an asset ID, look it up
   if (isAssetId(storedValue)) {
     return assetRegistry[storedValue];
   }
-  
+
   // If it's a data URL (uploaded image), use it directly
   if (isDataUrl(storedValue)) {
     return storedValue;
   }
-  
+
   // Legacy path migration: try to extract asset ID from old paths
   // Old paths look like: /src/assets/bg-images/asset-18.jpg or /assets/asset-18-hash.jpg
   const legacyMatch = storedValue.match(/asset-(\d+)/);
   if (legacyMatch) {
     const assetId = `bg-${legacyMatch[1]}`;
     if (isAssetId(assetId)) {
-      console.log(`Migrating legacy path to asset ID: ${storedValue} -> ${assetId}`);
+      console.log(
+        `Migrating legacy path to asset ID: ${storedValue} -> ${assetId}`,
+      );
       return assetRegistry[assetId];
     }
   }
-  
+
   // Check for mac assets
   const macMatch = storedValue.match(/mac-asset-(\d+)/);
   if (macMatch) {
     const assetId = `mac-${macMatch[1]}`;
     if (isAssetId(assetId)) {
-      console.log(`Migrating legacy path to asset ID: ${storedValue} -> ${assetId}`);
+      console.log(
+        `Migrating legacy path to asset ID: ${storedValue} -> ${assetId}`,
+      );
       return assetRegistry[assetId];
     }
   }
-  
+
   // Fallback to default
-  console.warn(`Unable to resolve background path: ${storedValue}, using default`);
+  console.warn(
+    `Unable to resolve background path: ${storedValue}, using default`,
+  );
   return getDefaultBackgroundPath();
 }
 
@@ -195,12 +201,12 @@ export function toStorableValue(path: string): string | null {
   if (assetId) {
     return assetId;
   }
-  
+
   // Data URLs can be stored directly
   if (isDataUrl(path)) {
     return path;
   }
-  
+
   return null;
 }
 
@@ -213,12 +219,12 @@ export function migrateStoredValue(storedValue: string): string | null {
   if (isAssetId(storedValue)) {
     return storedValue;
   }
-  
+
   // Data URLs are valid
   if (isDataUrl(storedValue)) {
     return storedValue;
   }
-  
+
   // Try to extract asset ID from legacy paths like:
   // /src/assets/bg-images/asset-18.jpg
   // /assets/asset-18-hash.jpg
@@ -229,7 +235,7 @@ export function migrateStoredValue(storedValue: string): string | null {
       return assetId;
     }
   }
-  
+
   // Check for mac assets: mac-asset-5.jpg
   const macMatch = storedValue.match(/mac-asset-(\d+)/);
   if (macMatch) {
@@ -238,7 +244,7 @@ export function migrateStoredValue(storedValue: string): string | null {
       return assetId;
     }
   }
-  
+
   // Check for mesh/gradient: mesh1.webp
   const meshMatch = storedValue.match(/mesh(\d+)/);
   if (meshMatch) {
@@ -247,7 +253,7 @@ export function migrateStoredValue(storedValue: string): string | null {
       return assetId;
     }
   }
-  
+
   // Unknown format - return default
   console.warn(`Unable to migrate stored value: ${storedValue}`);
   return DEFAULT_BACKGROUND_ID;

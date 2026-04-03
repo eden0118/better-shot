@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -16,11 +16,11 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
-            arch: 'silicon'
+            args: "--target aarch64-apple-darwin"
+            arch: "silicon"
           - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
-            arch: 'intel'
+            args: "--target x86_64-apple-darwin"
+            arch: "intel"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -68,26 +68,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'Better Shot ${{ github.ref_name }}'
+          releaseName: "Better Shot ${{ github.ref_name }}"
           releaseBody: |
             ## Downloads
-            
+
             | Platform | Architecture | Download |
             |----------|--------------|----------|
             | macOS | Apple Silicon (M1/M2/M3) | `bettershot_*_aarch64.dmg` |
             | macOS | Intel | `bettershot_*_x64.dmg` |
-            
+
             ## Installation
-            
+
             1. Download the `.dmg` file for your Mac
                - **Apple Silicon** (M1, M2, M3, M4, M5): Download the `aarch64` version
                - **Intel Mac**: Download the `x64` version
             2. Open the DMG and drag Better Shot to Applications
             3. Launch Better Shot from Applications
             4. Grant Screen Recording permission when prompted in System Settings
-            
+
             ## What's New
-            
+
             ${{ steps.release_notes.outputs.notes }}
           releaseDraft: true
           prerelease: false
@@ -106,10 +106,10 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            
+
             const tagName = context.ref.replace('refs/tags/', '');
             const draftRelease = releases.find(r => r.draft && r.tag_name === tagName);
-            
+
             if (draftRelease) {
               await github.rest.repos.updateRelease({
                 owner: context.repo.owner,

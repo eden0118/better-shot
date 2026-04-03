@@ -3,7 +3,12 @@ import { toast } from "sonner";
 import { Check, Bookmark, Link2, Unlink2, RotateCcw } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { ShadowSettings } from "@/stores/editorStore";
 
 interface EffectsPanelProps {
@@ -111,7 +116,9 @@ export const EffectsPanel = memo(function EffectsPanel({
       {/* Background Effects */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-foreground font-mono text-balance">Background Effects</h3>
+          <h3 className="text-sm font-medium text-foreground font-mono text-balance">
+            Background Effects
+          </h3>
         </div>
 
         <div className="space-y-6">
@@ -120,14 +127,21 @@ export const EffectsPanel = memo(function EffectsPanel({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <label className="text-xs text-muted-foreground font-medium cursor-help">Gaussian Blur</label>
+                    <label className="text-xs text-muted-foreground font-medium cursor-help">
+                      Gaussian Blur
+                    </label>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="max-w-48">
-                    <p className="text-xs text-pretty">Apply Gaussian blur to the background behind the captured image.</p>
+                    <p className="text-xs text-pretty">
+                      Apply Gaussian blur to the background behind the captured
+                      image.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums">{blurAmount}px</span>
+              <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                {blurAmount}px
+              </span>
             </div>
             <Slider
               value={[blurAmount]}
@@ -142,8 +156,12 @@ export const EffectsPanel = memo(function EffectsPanel({
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground font-medium">Noise</label>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums">{noiseAmount}%</span>
+              <label className="text-xs text-muted-foreground font-medium">
+                Noise
+              </label>
+              <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                {noiseAmount}%
+              </span>
             </div>
             <Slider
               value={[noiseAmount]}
@@ -161,10 +179,15 @@ export const EffectsPanel = memo(function EffectsPanel({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <label className="text-xs text-muted-foreground font-medium cursor-help">Padding</label>
+                    <label className="text-xs text-muted-foreground font-medium cursor-help">
+                      Padding
+                    </label>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="max-w-48">
-                    <p className="text-xs text-pretty">Adjust the padding around the captured image. Use the link button to sync all sides.</p>
+                    <p className="text-xs text-pretty">
+                      Adjust the padding around the captured image. Use the link
+                      button to sync all sides.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -191,8 +214,12 @@ export const EffectsPanel = memo(function EffectsPanel({
                     <TooltipTrigger asChild>
                       <button
                         onClick={handleLinkToggle}
-                        className={`p-1 rounded transition-colors ${isLinked ? 'bg-secondary text-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
-                        aria-label={isLinked ? "Unlink padding values" : "Link all padding values"}
+                        className={`p-1 rounded transition-colors ${isLinked ? "bg-secondary text-foreground" : "hover:bg-secondary text-muted-foreground"}`}
+                        aria-label={
+                          isLinked
+                            ? "Unlink padding values"
+                            : "Link all padding values"
+                        }
                       >
                         {isLinked ? (
                           <Link2 className="size-3.5" />
@@ -202,7 +229,11 @@ export const EffectsPanel = memo(function EffectsPanel({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{isLinked ? "Unlink padding values (change independently)" : "Link all padding values (change together)"}</p>
+                      <p>
+                        {isLinked
+                          ? "Unlink padding values (change independently)"
+                          : "Link all padding values (change together)"}
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -215,11 +246,15 @@ export const EffectsPanel = memo(function EffectsPanel({
               </div>
             )}
 
-              <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs text-muted-foreground font-medium">Top</label>
-                  <span className="text-xs text-muted-foreground font-mono tabular-nums">{paddingTop}px</span>
+                  <label className="text-xs text-muted-foreground font-medium">
+                    Top
+                  </label>
+                  <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                    {paddingTop}px
+                  </span>
                 </div>
                 <Slider
                   value={[paddingTop]}
@@ -246,8 +281,12 @@ export const EffectsPanel = memo(function EffectsPanel({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs text-muted-foreground font-medium">Bottom</label>
-                  <span className="text-xs text-muted-foreground font-mono tabular-nums">{paddingBottom}px</span>
+                  <label className="text-xs text-muted-foreground font-medium">
+                    Bottom
+                  </label>
+                  <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                    {paddingBottom}px
+                  </span>
                 </div>
                 <Slider
                   value={[paddingBottom]}
@@ -274,8 +313,12 @@ export const EffectsPanel = memo(function EffectsPanel({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs text-muted-foreground font-medium">Left</label>
-                  <span className="text-xs text-muted-foreground font-mono tabular-nums">{paddingLeft}px</span>
+                  <label className="text-xs text-muted-foreground font-medium">
+                    Left
+                  </label>
+                  <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                    {paddingLeft}px
+                  </span>
                 </div>
                 <Slider
                   value={[paddingLeft]}
@@ -302,8 +345,12 @@ export const EffectsPanel = memo(function EffectsPanel({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs text-muted-foreground font-medium">Right</label>
-                  <span className="text-xs text-muted-foreground font-mono tabular-nums">{paddingRight}px</span>
+                  <label className="text-xs text-muted-foreground font-medium">
+                    Right
+                  </label>
+                  <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                    {paddingRight}px
+                  </span>
                 </div>
                 <Slider
                   value={[paddingRight]}
@@ -335,14 +382,20 @@ export const EffectsPanel = memo(function EffectsPanel({
       {/* Shadow Effects */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-foreground font-mono text-balance">Shadow</h3>
+          <h3 className="text-sm font-medium text-foreground font-mono text-balance">
+            Shadow
+          </h3>
         </div>
-        
+
         <div className="space-y-6">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground font-medium">Blur</label>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums">{shadow.blur}px</span>
+              <label className="text-xs text-muted-foreground font-medium">
+                Blur
+              </label>
+              <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                {shadow.blur}px
+              </span>
             </div>
             <Slider
               value={[shadow.blur]}
@@ -357,12 +410,18 @@ export const EffectsPanel = memo(function EffectsPanel({
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground font-medium">Offset X</label>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums">{shadow.offsetX}px</span>
+              <label className="text-xs text-muted-foreground font-medium">
+                Offset X
+              </label>
+              <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                {shadow.offsetX}px
+              </span>
             </div>
             <Slider
               value={[shadow.offsetX]}
-              onValueChange={(value) => onShadowOffsetXChangeTransient?.(value[0])}
+              onValueChange={(value) =>
+                onShadowOffsetXChangeTransient?.(value[0])
+              }
               onValueCommit={(value) => onShadowOffsetXChange(value[0])}
               min={-50}
               max={50}
@@ -373,12 +432,18 @@ export const EffectsPanel = memo(function EffectsPanel({
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground font-medium">Offset Y</label>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums">{shadow.offsetY}px</span>
+              <label className="text-xs text-muted-foreground font-medium">
+                Offset Y
+              </label>
+              <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                {shadow.offsetY}px
+              </span>
             </div>
             <Slider
               value={[shadow.offsetY]}
-              onValueChange={(value) => onShadowOffsetYChangeTransient?.(value[0])}
+              onValueChange={(value) =>
+                onShadowOffsetYChangeTransient?.(value[0])
+              }
               onValueCommit={(value) => onShadowOffsetYChange(value[0])}
               min={-50}
               max={50}
@@ -389,12 +454,18 @@ export const EffectsPanel = memo(function EffectsPanel({
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground font-medium">Opacity</label>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums">{shadow.opacity}%</span>
+              <label className="text-xs text-muted-foreground font-medium">
+                Opacity
+              </label>
+              <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                {shadow.opacity}%
+              </span>
             </div>
             <Slider
               value={[shadow.opacity]}
-              onValueChange={(value) => onShadowOpacityChangeTransient?.(value[0])}
+              onValueChange={(value) =>
+                onShadowOpacityChangeTransient?.(value[0])
+              }
               onValueCommit={(value) => onShadowOpacityChange(value[0])}
               min={0}
               max={100}
@@ -419,7 +490,10 @@ export const EffectsPanel = memo(function EffectsPanel({
                   className="w-full text-muted-foreground hover:text-foreground"
                 >
                   {justSaved ? (
-                    <Check className="size-3.5 mr-1.5 text-green-500" aria-hidden="true" />
+                    <Check
+                      className="size-3.5 mr-1.5 text-green-500"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <Bookmark className="size-3.5 mr-1.5" aria-hidden="true" />
                   )}
@@ -427,7 +501,9 @@ export const EffectsPanel = memo(function EffectsPanel({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p className="text-xs text-pretty">Save current effect settings as defaults for new screenshots</p>
+                <p className="text-xs text-pretty">
+                  Save current effect settings as defaults for new screenshots
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
