@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AppWindowMac, Scan, Settings } from "lucide-react";
+import { RegionSizeSelector, type RegionSizeSelection } from "@/components/RegionSizeSelector";
 
 // Lazy load heavy components
 const ImageEditor = lazy(() =>
@@ -300,6 +301,8 @@ function App() {
     height: number;
     name: string;
   } | null>(null);
+  const [showRegionSizeSelector, setShowRegionSizeSelector] = useState(false);
+  const [selectedRegionSize, setSelectedRegionSize] = useState<RegionSizeSelection | null>(null);
 
   // Refs to hold current values for use in callbacks that may have stale closures
   const settingsRef = useRef({ saveDir, copyToClipboard, tempDir });
@@ -416,11 +419,19 @@ function App() {
     async (captureMode: CaptureMode = "fullscreen") => {
       /**
        * Main capture flow:
-       * 1. Debounce to prevent rapid consecutive captures
-       * 2. Hide app window to capture clean screen
-       * 3. Invoke Tauri command to capture screenshot
-       * 4. Route screenshot to editor via mode transition
+       * 1. If region mode, show size selector first
+       * 2. Debounce to prevent rapid consecutive captures
+       * 3. Hide app window to capture clean screen
+       * 4. Invoke Tauri command to capture screenshot
+       * 5. Route screenshot to editor via mode transition
        */
+
+      // For region capture, show size selector first
+      if (captureMode === "region") {
+        setShowRegionSizeSelector(true);
+        return;
+      }
+
       const now = Date.now();
       if (now - lastCaptureTimeRef.current < 600) {
         return;
@@ -504,6 +515,94 @@ function App() {
       }
     },
     [settingsRef, lastCaptureTimeRef],
+  );
+
+  const handleRegionSizeSelect = useCallback(
+    async (selection: RegionSizeSelection) => {
+      /**
+       * Handle region size selection:
+       * 1. Store the selection settings
+       * 2. Proceed with interactive region capture
+       */
+      if (isCapturing) return;
+
+      setSelectedRegionSize(selection);
+      setShowRegionSizeSelector(false);
+      setIsCapturing(true);
+
+      const appWindow = getCurrentWindow();
+
+      // Read current settings from ref to avoid stale closure issues
+      const { tempDir: currentTempDir } = settingsRef.current;
+
+      try {
+        // Log the selected size
+        if (selection.mode === "fixed" && selection.width && selection.height) {
+          console.log(
+            `Capturing region with selected size: ${selection.width}x${selection.height}`,
+          );
+        }
+
+        await appWindow.hide();
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        const screenshotPath = await invoke<string>("native_capture_interactive", {
+          saveDir: currentTempDir,
+        });
+
+        // Get mouse position IMMEDIATELY after screenshot completes
+        let mouseX: number | undefined;
+        let mouseY: number | undefined;
+        try {
+          const [x, y] = await invoke<[number, number]>("get_mouse_position");
+          mouseX = x;
+          mouseY = y;
+        } catch {
+          // Silently fail - will fall back to centering
+        }
+
+        invoke("play_screenshot_sound").catch(console.error);
+
+        setTempScreenshotPath(screenshotPath);
+        setMode("editing");
+        try {
+          await invoke("move_window_to_active_space");
+        } catch {}
+        await restoreWindowOnScreen(mouseX, mouseY);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        if (
+          errorMessage.includes("cancelled") ||
+          errorMessage.includes("was cancelled")
+        ) {
+          await restoreWindow();
+        } else if (errorMessage.includes("already in progress")) {
+          toast.error("Screenshot already in progress", {
+            description: "Please wait for the current screenshot to complete",
+          });
+          await restoreWindow();
+        } else if (
+          errorMessage.toLowerCase().includes("permission") ||
+          errorMessage.toLowerCase().includes("access") ||
+          errorMessage.toLowerCase().includes("denied")
+        ) {
+          toast.error("Permission required", {
+            description:
+              "Please go to System Settings > Privacy & Security > Screen Recording and enable access for Better Shot, then restart the app.",
+            duration: 6000,
+          });
+          await restoreWindow();
+        } else {
+          toast.error("Screenshot failed", {
+            description: errorMessage,
+          });
+          await restoreWindow();
+        }
+      } finally {
+        setIsCapturing(false);
+      }
+    },
+    [settingsRef, isCapturing],
   );
 
   // Setup hotkeys whenever settings change
@@ -742,10 +841,24 @@ function App() {
     );
   }
 
+  // If showing region size selector, only display the toolbar
+  if (showRegionSizeSelector) {
+    return (
+      <div className="h-dvh w-full bg-black/90 flex flex-col">
+        <RegionSizeSelector
+          onSelect={handleRegionSizeSelect}
+          onCancel={() => setShowRegionSizeSelector(false)}
+        />
+        <div className="flex-1" />
+      </div>
+    );
+  }
+
   return (
-    // Main application UI (mode="main")
-    // Displays: capture buttons, shortcuts reference, settings dialog
-    <main className="h-dvh w-full flex flex-col items-center justify-center px-6 bg-background relative">
+    <>
+      {/* Main application UI (mode="main") */}
+      {/* Displays: capture buttons, shortcuts reference, settings dialog */}
+      <main className="h-dvh w-full flex flex-col items-center justify-center px-6 bg-background relative">
       {/* Settings button - top right */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <Button
@@ -895,6 +1008,7 @@ function App() {
         </div>
       </div>
     </main>
+    </>
   );
 }
 

@@ -4,5 +4,10 @@
 <dict>
     <key>LSUIElement</key>
     <true/>
+    <key>NSAppearance</key>
+    <dict>
+        <key>NSAppearanceName</key>
+        <string>NSAppearanceNameDarkAqua</string>
+    </dict>
 </dict>
 </plist>
