@@ -76,9 +76,10 @@ pub fn run() {
         .setup(|app| {
             use tauri::menu::{ MenuBuilder, MenuItemBuilder, PredefinedMenuItem};
 
-            // Set accessory mode on macOS to hide Dock icon and Cmd+Tab entry
-            #[cfg(target_os = "macos")]
-            set_macos_accessory_mode();
+            // Temporarily disable accessory mode for development to see the window
+            // Uncomment after debugging is complete
+            // #[cfg(target_os = "macos")]
+            // set_macos_accessory_mode();
 
             // Enable autostart by default (user can disable in settings)
             #[cfg(target_os = "macos")]
@@ -91,8 +92,8 @@ pub fn run() {
                 }
             }
 
-            // Create the main window but keep it hidden initially
-            // This allows the React frontend to run and set up event listeners
+            // Create the main window and show it for development
+            // In production, window visibility is controlled by React app initialization
             let window = match app.get_webview_window("main") {
                 Some(w) => w,
                 None => WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
@@ -102,7 +103,7 @@ pub fn run() {
                     .center()
                     .resizable(true)
                     .decorations(true)
-                    .visible(false) // Start hidden
+                    .visible(true) // Show on startup for development
                     .build()?,
             };
 
@@ -142,77 +143,50 @@ pub fn run() {
                 }
             });
 
-            #[cfg(target_os = "macos")]
-            {
-                use objc2::msg_send;
-                use objc2::runtime::Class;
-                use objc2_app_kit::NSWindow;
+            // Temporarily disable macOS appearance settings for debugging
+            // #[cfg(target_os = "macos")]
+            // {
 
-                window
-                    .with_webview(|webview| {
-                        let ns_window = webview.ns_window();
-                        if ns_window.is_null() {
-                            return;
-                        }
-                        let ns_window = unsafe { &*ns_window.cast::<NSWindow>() };
-
-                        unsafe {
-                            // Set window appearance to dark
-                            let appearance_class = Class::get(c"NSAppearance");
-                            if let Some(cls) = appearance_class {
-                                // Create NSString for the appearance name
-                                let appearance_name_str = c"NSAppearanceNameDarkAqua";
-                                // Use msg_send to get the appearance
-                                let dark_appearance: *const objc2::runtime::Object =
-                                    msg_send![cls, appearanceNamed:appearance_name_str.as_ptr() as *const _];
-                                if !dark_appearance.is_null() {
-                                    let _: () = msg_send![ns_window, setAppearance:dark_appearance];
-                                }
-                            }
-                        }
-                    })
-                    .ok();
-            }
-
-            #[cfg(target_os = "macos")]
-            {
-                use objc2::msg_send;
-                use objc2::runtime::Class;
-                use objc2_app_kit::NSWindow;
-
-                overlay
-                    .with_webview(|webview| {
-                        let ns_window = webview.ns_window();
-                        if ns_window.is_null() {
-                            return;
-                        }
-                        let ns_window = unsafe { &*ns_window.cast::<NSWindow>() };
-
-                        unsafe {
-                            // Set window appearance to dark
-                            let appearance_class = Class::get(c"NSAppearance");
-                            if let Some(cls) = appearance_class {
-                                // Create NSString for the appearance name
-                                let appearance_name_str = c"NSAppearanceNameDarkAqua";
-                                // Use msg_send to get the appearance
-                                let dark_appearance: *const objc2::runtime::Object =
-                                    msg_send![cls, appearanceNamed:appearance_name_str.as_ptr() as *const _];
-                                if !dark_appearance.is_null() {
-                                    let _: () = msg_send![ns_window, setAppearance:dark_appearance];
-                                }
-                            }
-
-                            let collection_behavior: usize = 1 << 7;
-                            let current: usize = msg_send![ns_window, collectionBehavior];
-                            let new_behavior = current | collection_behavior;
-                            let _: () = msg_send![ns_window, setCollectionBehavior: new_behavior];
-
-                            let _: () = msg_send![ns_window, setHidesOnDeactivate: false];
-                            let _: () = msg_send![ns_window, setCanHide: false];
-                        }
-                    })
-                    .ok();
-            }
+            // Temporarily disable macOS overlay settings for debugging
+            // #[cfg(target_os = "macos")]
+            // {
+            //     use objc2::msg_send;
+            //     use objc2::runtime::Class;
+            //     use objc2_app_kit::NSWindow;
+            //
+            //     overlay
+            //         .with_webview(|webview| {
+            //             let ns_window = webview.ns_window();
+            //             if ns_window.is_null() {
+            //                 return;
+            //             }
+            //             let ns_window = unsafe { &*ns_window.cast::<NSWindow>() };
+            //
+            //             unsafe {
+            //                 // Set window appearance to dark
+            //                 let appearance_class = Class::get(c"NSAppearance");
+            //                 if let Some(cls) = appearance_class {
+            //                     // Create NSString for the appearance name
+            //                     let appearance_name_str = c"NSAppearanceNameDarkAqua";
+            //                     // Use msg_send to get the appearance
+            //                     let dark_appearance: *const objc2::runtime::Object =
+            //                         msg_send![cls, appearanceNamed:appearance_name_str.as_ptr() as *const _];
+            //                     if !dark_appearance.is_null() {
+            //                         let _: () = msg_send![ns_window, setAppearance:dark_appearance];
+            //                     }
+            //                 }
+            //
+            //                 let collection_behavior: usize = 1 << 7;
+            //                 let current: usize = msg_send![ns_window, collectionBehavior];
+            //                 let new_behavior = current | collection_behavior;
+            //                 let _: () = msg_send![ns_window, setCollectionBehavior: new_behavior];
+            //
+            //                 let _: () = msg_send![ns_window, setHidesOnDeactivate: false];
+            //                 let _: () = msg_send![ns_window, setCanHide: false];
+            //             }
+            //         })
+            //         .ok();
+            // }
 
             let open_item = MenuItemBuilder::with_id("open", "Open Better Shot").build(app)?;
 
