@@ -13,7 +13,7 @@ mod utils;
 
 use commands::{
     capture_all_monitors, capture_once, capture_region, copy_image_file_to_clipboard,
-    get_desktop_directory, get_mouse_position, get_temp_directory, move_window_to_active_space,
+    get_desktop_directory, get_image_dimensions, get_mouse_position, get_temp_directory, move_window_to_active_space,
     native_capture_fullscreen, native_capture_interactive, native_capture_window,
     native_capture_ocr_region, play_screenshot_sound, render_image_with_effects_rust, save_edited_image,
 };
@@ -249,6 +249,7 @@ pub fn run() {
             render_image_with_effects_rust,
             get_desktop_directory,
             get_temp_directory,
+            get_image_dimensions,
             native_capture_interactive,
             native_capture_fullscreen,
             native_capture_window,

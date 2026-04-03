@@ -28,9 +28,11 @@ interface ImageEditorProps {
   imagePath: string;
   onSave: (editedImageData: string) => void;
   onCancel: () => void;
+  presetSize?: { width: number; height: number; name: string } | null;
+  onPresetApplied?: () => void;
 }
 
-export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
+export function ImageEditor({ imagePath, onSave, onCancel, presetSize, onPresetApplied }: ImageEditorProps) {
   // Use Zustand store with selectors for optimized re-renders
   const settings = useSettings();
   const annotations = useAnnotations();
@@ -38,12 +40,12 @@ export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
   const canRedo = useCanRedo();
   // Use stable actions object (not a hook, doesn't cause re-renders)
   const actions = editorActions;
-  
+
   // Screenshot image state
   const [screenshotImage, setScreenshotImage] = useState<HTMLImageElement | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  
+
   // Save/copy state
   const [isSaving, setIsSaving] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
@@ -52,7 +54,7 @@ export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
    // Annotation UI state (not part of undo/redo)
   const [selectedTool, setSelectedTool] = useState<ToolType>("select");
   const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null);
-  
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Preview generator hook
@@ -144,11 +146,11 @@ export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
   // Save handler
   const handleSave = useCallback(async () => {
     if (!screenshotImage || isSaving || isCopying) return;
-    
+
     setIsSaving(true);
     try {
       const highQualityCanvas = await renderHighQualityCanvas(annotations, imagePath);
-      
+
       if (!highQualityCanvas) {
         setIsSaving(false);
         return;
@@ -183,24 +185,24 @@ export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
   // Copy handler
   const handleCopy = useCallback(async () => {
     if (!screenshotImage || isSaving || isCopying) return;
-    
+
     setIsCopying(true);
     try {
       const highQualityCanvas = await renderHighQualityCanvas(annotations, imagePath);
-      
+
       if (!highQualityCanvas) {
         setIsCopying(false);
         return;
       }
 
       const dataUrl = highQualityCanvas.toDataURL("image/png");
-      
+
       await invoke<string>("save_edited_image", {
         imageData: dataUrl,
         saveDir: tempDir,
         copyToClip: true,
       });
-      
+
       toast.success("Screenshot copied to clipboard!", {
         duration: 2000,
       });
@@ -273,7 +275,7 @@ export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
-      
+
       if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedAnnotation) {
           e.preventDefault();
@@ -332,6 +334,23 @@ export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
 
   return (
     <div className="flex flex-col h-dvh bg-background text-foreground">
+      {/* Preset Size Indicator */}
+      {presetSize && (
+        <div className="px-6 py-3 bg-blue-950/40 border-b border-blue-800/50 flex items-center justify-between">
+          <div className="text-sm text-blue-200">
+            <span className="font-medium">Preset Size Active:</span> {presetSize.name} ({presetSize.width} × {presetSize.height} px)
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onPresetApplied?.()}
+            className="text-xs"
+          >
+            Clear
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold text-foreground text-balance">Edit Screenshot</h2>
@@ -384,9 +403,9 @@ export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
+                <Button
                   variant="cta"
-                  onClick={handleCopy} 
+                  onClick={handleCopy}
                   disabled={!imageLoaded || isSaving || isCopying}
                   className="disabled:opacity-50"
                 >
@@ -404,9 +423,9 @@ export function ImageEditor({ imagePath, onSave, onCancel }: ImageEditorProps) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
+                <Button
                   variant="cta"
-                  onClick={handleSave} 
+                  onClick={handleSave}
                   disabled={!imageLoaded || isSaving || isCopying}
                   className="disabled:opacity-50"
                 >

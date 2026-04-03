@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { BackgroundImageSelector } from "./BackgroundImageSelector";
 import { KeyboardShortcutManager } from "./KeyboardShortcutManager";
+import { PresetSizesManager } from "./PresetSizesManager";
 import type { KeyboardShortcut } from "./KeyboardShortcutManager";
 
 interface PreferencesPageProps {
@@ -31,10 +32,10 @@ export function PreferencesPage({ onBack, onSettingsChange }: PreferencesPagePro
     const loadSettings = async () => {
       try {
         const store = await Store.load("settings.json");
-        
+
         const copyToClip = await store.get<boolean>("copyToClipboard");
         const saveDir = await store.get<string>("saveDir");
-        
+
         setSettings({
           saveDir: saveDir || "",
           copyToClipboard: copyToClip ?? true,
@@ -53,7 +54,7 @@ export function PreferencesPage({ onBack, onSettingsChange }: PreferencesPagePro
     value: GeneralSettings[K]
   ) => {
     setSettings(prev => ({ ...prev, [key]: value }));
-    
+
     try {
       const store = await Store.load("settings.json");
       await store.set(key, value);
@@ -159,6 +160,9 @@ export function PreferencesPage({ onBack, onSettingsChange }: PreferencesPagePro
           </CardContent>
         </Card>
 
+        {/* Preset Screenshot Sizes */}
+        <PresetSizesManager />
+
         {/* Keyboard Shortcuts */}
         <Card className="bg-card border-border">
           <CardHeader className="pb-4">
@@ -166,7 +170,7 @@ export function PreferencesPage({ onBack, onSettingsChange }: PreferencesPagePro
           </CardHeader>
           <CardContent className="space-y-6">
             <KeyboardShortcutManager onShortcutsChange={handleShortcutsChange} />
-            
+
             {/* Editor Shortcuts Reference */}
             <div className="space-y-3 pt-4 border-t border-border">
               <div>

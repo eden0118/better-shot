@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+coverage
+.next
+.git
+src-tauri
+bettershot-landing
+pnpm-lock.yaml
+package-lock.json
+*.lock

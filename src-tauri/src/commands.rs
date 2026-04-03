@@ -141,6 +141,14 @@ pub async fn get_temp_directory() -> Result<String, String> {
         .ok_or_else(|| "Failed to convert temp directory path to string".to_string())
 }
 
+/// Get image dimensions (width and height) from an image file
+#[tauri::command]
+pub async fn get_image_dimensions(image_path: String) -> Result<(u32, u32), String> {
+    let img = image::open(&image_path)
+        .map_err(|e| format!("Failed to open image: {}", e))?;
+    Ok((img.width(), img.height()))
+}
+
 /// Check if screencapture is already running
 fn is_screencapture_running() -> bool {
     let output = Command::new("pgrep")
@@ -351,7 +359,7 @@ pub async fn play_screenshot_sound() -> Result<(), String> {
 #[cfg(target_os = "macos")]
 fn fallback_sound_playback() {
     let sound_path = "/System/Library/Components/CoreAudio.component/Contents/SharedSupport/SystemSounds/system/Screen Capture.aif";
-    
+
     let _ = Command::new("osascript")
         .arg("-e")
         .arg(format!("do shell script \"afplay '{}' &\"", sound_path))

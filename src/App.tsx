@@ -17,9 +17,13 @@ import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import { Store } from "@tauri-apps/plugin-store";
 import { AppWindowMac, Crop, Monitor, ScanText } from "lucide-react";
 import { toast } from "sonner";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, useMemo } from "react";
 import type { KeyboardShortcut } from "./components/preferences/KeyboardShortcutManager";
 import { SettingsIcon } from "./components/SettingsIcon";
+import { PresetSizesQuickSelect } from "./components/PresetSizesQuickSelect";
+import { SaveSizeDialog } from "./components/SaveSizeDialog";
+import { FixedSizesSelector, type FixedSize } from "./components/FixedSizesSelector";
+import { usePresetSizes, type PresetSize } from "./hooks/usePresetSizes";
 
 // Lazy load heavy components
 const ImageEditor = lazy(() => import("./components/ImageEditor").then(m => ({ default: m.ImageEditor })));
@@ -70,7 +74,7 @@ async function restoreWindowOnScreen(mouseX?: number, mouseY?: number) {
   if (mouseX !== undefined && mouseY !== undefined) {
     try {
       const monitors = await availableMonitors();
-      
+
       const targetMonitor = monitors.find((monitor) => {
         const pos = monitor.position;
         const size = monitor.size;
@@ -88,7 +92,7 @@ async function restoreWindowOnScreen(mouseX?: number, mouseY?: number) {
         const physicalWindowHeight = windowHeight * scaleFactor;
         const centerX = targetMonitor.position.x + (targetMonitor.size.width - physicalWindowWidth) / 2;
         const centerY = targetMonitor.position.y + (targetMonitor.size.height - physicalWindowHeight) / 2;
-        
+
         await appWindow.setPosition(new PhysicalPosition(centerX, centerY));
       } else {
         await appWindow.center();
@@ -222,16 +226,57 @@ function App() {
   const [shortcuts, setShortcuts] = useState<KeyboardShortcut[]>(DEFAULT_SHORTCUTS);
   const [settingsVersion, setSettingsVersion] = useState(0);
   const [tempDir, setTempDir] = useState<string>("/tmp");
+  const [selectedPresetSize, setSelectedPresetSize] = useState<{ width: number; height: number; name: string } | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [capturedDimensions, setCapturedDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [showFixedSizesSelector, setShowFixedSizesSelector] = useState(false);
+  const [pendingCaptureMode, setPendingCaptureMode] = useState<CaptureMode | null>(null);
+  const [selectedFixedSize, setSelectedFixedSize] = useState<FixedSize | null>(null);
 
   // Refs to hold current values for use in callbacks that may have stale closures
   const settingsRef = useRef({ autoApplyBackground, saveDir, copyToClipboard, tempDir });
   const registeredShortcutsRef = useRef<Set<string>>(new Set());
   const lastCaptureTimeRef = useRef(0);
-  
+  const fixedSizeToPresetRef = useRef<PresetSize | null>(null);
+  const handleCaptureRef = useRef<((captureMode?: CaptureMode) => Promise<void>) | null>(null);
+
+  // Get preset sizes hook first
+  const { presetSizes, addPresetSize } = usePresetSizes();
+
+  // Convert fixed size to preset for region selector
+  const presetSizesForRegion = useMemo(() => {
+    if (!selectedFixedSize) return presetSizes;
+    const fixedPreset: PresetSize = {
+      id: selectedFixedSize.id,
+      name: selectedFixedSize.name,
+      width: selectedFixedSize.width,
+      height: selectedFixedSize.height,
+    };
+    fixedSizeToPresetRef.current = fixedPreset;
+    return [fixedPreset, ...presetSizes];
+  }, [selectedFixedSize, presetSizes]);
+
   // Keep ref in sync with state
   useEffect(() => {
     settingsRef.current = { autoApplyBackground, saveDir, copyToClipboard, tempDir };
   }, [autoApplyBackground, saveDir, copyToClipboard, tempDir]);
+
+  // Handle fixed size selection and continue with capture
+  useEffect(() => {
+    if (selectedFixedSize && pendingCaptureMode === "region") {
+      // Reset states first
+      setPendingCaptureMode(null);
+
+      // Schedule capture after states are updated
+      setTimeout(() => {
+        // Re-call capture with the selectedFixedSize now set
+        lastCaptureTimeRef.current = 0;
+        if (handleCaptureRef.current) {
+          handleCaptureRef.current("region");
+        }
+      }, 50);
+    }
+  }, [selectedFixedSize, pendingCaptureMode]);
 
   // Load settings function
   const loadSettings = useCallback(async () => {
@@ -366,8 +411,55 @@ function App() {
     // setMode("editing");
   }, []);
 
+  const handleSavePreset = useCallback(async (presetName: string) => {
+    if (!capturedDimensions) return;
+
+    try {
+      await addPresetSize(presetName, capturedDimensions.width, capturedDimensions.height);
+      toast.success("Preset saved!", {
+        description: `${presetName} (${capturedDimensions.width}×${capturedDimensions.height}px)`,
+      });
+      setShowSaveDialog(false);
+      setCapturedDimensions(null);
+      // Proceed to editing mode
+      setMode("editing");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error("Failed to save preset", {
+        description: errorMessage,
+      });
+    }
+  }, [capturedDimensions, addPresetSize]);
+
+  const handleSkipSavePreset = useCallback(() => {
+    setShowSaveDialog(false);
+    setCapturedDimensions(null);
+    // Proceed to editing mode
+    setMode("editing");
+  }, []);
+
+  const handleFixedSizeSelect = useCallback((fixedSize: FixedSize) => {
+    setSelectedFixedSize(fixedSize);
+    setShowFixedSizesSelector(false);
+    setPendingCaptureMode("region");
+    toast.success(`Using fixed size: ${fixedSize.name} (${fixedSize.width}×${fixedSize.height}px)`);
+  }, []);
+
+  const handleCancelFixedSize = useCallback(() => {
+    setShowFixedSizesSelector(false);
+    setPendingCaptureMode(null);
+    setSelectedFixedSize(null);
+    setIsCapturing(false);
+  }, []);
 
   const handleCapture = useCallback(async (captureMode: CaptureMode = "region") => {
+    // For region capture, show fixed sizes selector first if not already selected
+    if (captureMode === "region" && !selectedFixedSize) {
+      setShowFixedSizesSelector(true);
+      setPendingCaptureMode("region");
+      return;
+    }
+
     const now = Date.now();
     if (now - lastCaptureTimeRef.current < 600) {
       return;
@@ -375,12 +467,12 @@ function App() {
     lastCaptureTimeRef.current = now;
 
     if (isCapturing) return;
-    
+
     setIsCapturing(true);
     setError(null);
 
     const appWindow = getCurrentWindow();
-    
+
     // Read current settings from ref to avoid stale closure issues
     const { autoApplyBackground: shouldAutoApply, saveDir: currentSaveDir, copyToClipboard: shouldCopyToClipboard, tempDir: currentTempDir } = settingsRef.current;
 
@@ -478,6 +570,25 @@ function App() {
       }
 
       setTempScreenshotPath(screenshotPath);
+
+      // For region captures, check dimensions and show save dialog
+      if (captureMode === "region") {
+        try {
+          const [width, height] = await invoke<[number, number]>("get_image_dimensions", {
+            image_path: screenshotPath,
+          });
+          setCapturedDimensions({ width, height });
+          setShowSaveDialog(true);
+          await restoreWindowOnScreen(mouseX, mouseY);
+          setIsCapturing(false);
+          return;
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          console.error("Failed to get image dimensions:", errorMessage);
+          // Continue with regular flow if we can't get dimensions
+        }
+      }
+
       setMode("editing");
       try {
         await invoke("move_window_to_active_space");
@@ -514,8 +625,10 @@ function App() {
       }
     } finally {
       setIsCapturing(false);
+      // Reset fixed size after capture attempt
+      setSelectedFixedSize(null);
     }
-  }, [isCapturing]);
+  }, [settingsRef, lastCaptureTimeRef, selectedFixedSize, presetSizesForRegion]);
 
   // Setup hotkeys whenever settings change
   useEffect(() => {
@@ -530,7 +643,7 @@ function App() {
           }
         }
         registeredShortcutsRef.current.clear();
-        
+
         const actionMap: Record<string, CaptureMode> = {
           "Capture Region": "region",
           "Capture Screen": "fullscreen",
@@ -540,7 +653,7 @@ function App() {
 
         for (const shortcut of shortcuts) {
           if (!shortcut.enabled) continue;
-          
+
           const action = actionMap[shortcut.action];
           if (action) {
             try {
@@ -568,9 +681,7 @@ function App() {
     };
   }, [shortcuts, settingsVersion, handleCapture]);
 
-  // Setup tray menu event listeners - only once on mount
-  // Use a ref to hold the latest handleCapture to avoid re-registering listeners
-  const handleCaptureRef = useRef(handleCapture);
+  // Update ref whenever handleCapture changes
   useEffect(() => {
     handleCaptureRef.current = handleCapture;
   }, [handleCapture]);
@@ -589,16 +700,16 @@ function App() {
     const setupListeners = async () => {
       // Use refs to always call the latest handler without re-registering
       unlisten1 = await listen("capture-triggered", () => {
-        if (mounted) handleCaptureRef.current("region");
+        if (mounted && handleCaptureRef.current) handleCaptureRef.current("region");
       });
       unlisten2 = await listen("capture-fullscreen", () => {
-        if (mounted) handleCaptureRef.current("fullscreen");
+        if (mounted && handleCaptureRef.current) handleCaptureRef.current("fullscreen");
       });
       unlisten3 = await listen("capture-window", () => {
-        if (mounted) handleCaptureRef.current("window");
+        if (mounted && handleCaptureRef.current) handleCaptureRef.current("window");
       });
       unlisten4 = await listen("capture-ocr", () => {
-        if (mounted) handleCaptureRef.current("ocr");
+        if (mounted && handleCaptureRef.current) handleCaptureRef.current("ocr");
       });
       unlisten5 = await listen("open-preferences", () => {
         if (mounted) setMode("preferences");
@@ -725,6 +836,8 @@ function App() {
           imagePath={tempScreenshotPath}
           onSave={handleEditorSave}
           onCancel={handleEditorCancel}
+          presetSize={selectedPresetSize}
+          onPresetApplied={() => setSelectedPresetSize(null)}
         />
       </Suspense>
     );
@@ -745,8 +858,8 @@ function App() {
   if (mode === "preferences") {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <PreferencesPage 
-          onBack={handleBackFromPreferences} 
+        <PreferencesPage
+          onBack={handleBackFromPreferences}
           onSettingsChange={handleSettingsChange}
         />
       </Suspense>
@@ -774,6 +887,14 @@ function App() {
 
         <Card className="bg-card border-border">
           <CardContent className="p-6 space-y-6">
+            {/* Preset Sizes Quick Select */}
+            <PresetSizesQuickSelect
+              onSelectSize={(width, height, name) => {
+                setSelectedPresetSize({ width, height, name });
+                toast.success(`Using preset: ${name} (${width}×${height}px)`);
+              }}
+            />
+
             <div className="grid grid-cols-2 gap-3">
               <Button
                 onClick={() => handleCapture("region")}
@@ -854,7 +975,7 @@ function App() {
         <Card className="bg-card border-border">
           <CardContent className="p-5 space-y-4">
             <h3 className="font-medium text-foreground text-sm">Keyboard Shortcuts</h3>
-            
+
             {/* Capture Shortcuts */}
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Capture</p>
@@ -924,6 +1045,24 @@ function App() {
         </Card>
       </div>
     </main>
+
+    {/* Save Size Dialog */}
+    <SaveSizeDialog
+      width={capturedDimensions?.width || 0}
+      height={capturedDimensions?.height || 0}
+      isOpen={showSaveDialog}
+      onSave={handleSavePreset}
+      onSkip={handleSkipSavePreset}
+      maxPresetsReached={presetSizes.length >= 5}
+    />
+
+    {/* Fixed Sizes Selector */}
+    {showFixedSizesSelector && (
+      <FixedSizesSelector
+        onSelectSize={handleFixedSizeSelect}
+        onCancel={handleCancelFixedSize}
+      />
+    )}
     </>
   );
 }
