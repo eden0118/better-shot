@@ -9,9 +9,8 @@ use tauri::{AppHandle, Manager};
 use objc2::msg_send;
 use objc2_app_kit::NSWindow;
 
-use crate::clipboard::{copy_image_to_clipboard, copy_text_to_clipboard};
-use crate::image::{copy_screenshot_to_dir, crop_image, render_image_with_effects, save_base64_image, CropRegion, RenderSettings};
-use crate::ocr::recognize_text_from_image;
+use crate::clipboard::{copy_image_to_clipboard};
+use crate::image::{copy_screenshot_to_dir, render_image_with_effects, save_base64_image, RenderSettings};
 use crate::screenshot::{
     capture_all_monitors as capture_monitors, capture_primary_monitor, MonitorShot,
 };
@@ -76,25 +75,6 @@ pub async fn capture_all_monitors(
     save_dir: String,
 ) -> Result<Vec<MonitorShot>, String> {
     capture_monitors(&save_dir)
-}
-
-/// Crop a region from a screenshot
-#[tauri::command]
-pub async fn capture_region(
-    screenshot_path: String,
-    x: u32,
-    y: u32,
-    width: u32,
-    height: u32,
-    save_dir: String,
-) -> Result<String, String> {
-    let region = CropRegion {
-        x,
-        y,
-        width,
-        height,
-    };
-    crop_image(&screenshot_path, region, &save_dir)
 }
 
 /// Render image with effects using Rust (optimized for blur)
@@ -452,71 +432,4 @@ pub async fn native_capture_window(save_dir: String) -> Result<String, String> {
     } else {
         Err("Screenshot was cancelled or failed".to_string())
     }
-}
-
-/// Capture region and perform OCR, copying text to clipboard
-#[tauri::command]
-pub async fn native_capture_ocr_region(save_dir: String) -> Result<String, String> {
-    {
-        let _lock = SCREENCAPTURE_LOCK
-            .lock()
-            .map_err(|e| format!("Failed to acquire lock: {}", e))?;
-
-        if is_screencapture_running() {
-            return Err("Another screenshot capture is already in progress".to_string());
-        }
-
-        check_and_activate_permission().map_err(|e| {
-            format!("Permission check failed: {}. Please ensure Screen Recording permission is granted in System Settings > Privacy & Security > Screen Recording.", e)
-        })?;
-    }
-
-    let filename = generate_filename("ocr_temp", "png")?;
-    let save_path = PathBuf::from(&save_dir);
-    let screenshot_path = save_path.join(&filename);
-    let path_str = screenshot_path.to_string_lossy().to_string();
-
-    let child = Command::new("screencapture")
-        .arg("-i")
-        .arg("-x")
-        .arg(&path_str)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("Failed to run screencapture: {}", e))?;
-
-    let output = child
-        .wait_with_output()
-        .map_err(|e| format!("Failed to wait for screencapture: {}", e))?;
-
-    if !output.status.success() {
-        if screenshot_path.exists() {
-            let _ = std::fs::remove_file(&screenshot_path);
-        }
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        if stderr.contains("permission")
-            || stderr.contains("denied")
-            || stderr.contains("not authorized")
-        {
-            return Err("Screen Recording permission required. Please grant permission in System Settings > Privacy & Security > Screen Recording and restart the app.".to_string());
-        }
-        return Err("Screenshot was cancelled or failed".to_string());
-    }
-
-    if !screenshot_path.exists() {
-        return Err("Screenshot was cancelled or failed".to_string());
-    }
-
-    play_screenshot_sound().await.ok();
-
-    let recognized_text = recognize_text_from_image(&path_str)
-        .map_err(|e| format!("OCR failed: {}", e))?;
-
-    copy_text_to_clipboard(&recognized_text)
-        .map_err(|e| format!("Failed to copy text to clipboard: {}", e))?;
-
-    let _ = std::fs::remove_file(&screenshot_path);
-
-    Ok(recognized_text)
 }

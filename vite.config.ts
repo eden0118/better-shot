@@ -2,13 +2,15 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import path from "path";
-
+// eslint-disable-next-line no-undef
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
+// eslint-disable-next-line no-undef
 export default defineConfig(async () => ({
   plugins: [react(), tailwindcss()],
   define: {
+    // eslint-disable-next-line no-undef
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
   resolve: {

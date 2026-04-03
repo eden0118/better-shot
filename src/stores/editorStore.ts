@@ -1,3 +1,16 @@
+/**
+ * Editor Store - Image editing state management
+ *
+ * Manages all editor state using Zustand with Immer middleware:
+ * - Annotation tools (shapes, text, arrows, numbering)
+ * - Background selection (gradients, colors, images)
+ * - Effects (blur, shadow, border radius)
+ * - History (undo/redo)
+ * - Tool configuration (colors, sizes, opacity)
+ *
+ * Persisted to localStorage for session recovery
+ */
+
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
@@ -45,14 +58,14 @@ interface HistorySnapshot {
 interface EditorState {
   // Settings slice
   settings: EditorSettings;
-  
+
   // Annotations slice
   annotations: Annotation[];
-  
+
   // History slice
   past: HistorySnapshot[];
   future: HistorySnapshot[];
-  
+
   // Transient state (not part of history)
   _isInitialized: boolean;
   _historyPaused: boolean;
@@ -408,11 +421,11 @@ export const useEditorStore = create<EditorStore>()(
       },
 
       setAllPadding: (padding) => {
-        get().updateSettings({ 
-          paddingTop: padding, 
-          paddingBottom: padding, 
-          paddingLeft: padding, 
-          paddingRight: padding 
+        get().updateSettings({
+          paddingTop: padding,
+          paddingBottom: padding,
+          paddingLeft: padding,
+          paddingRight: padding
         });
       },
 
@@ -519,12 +532,12 @@ export const useEditorStore = create<EditorStore>()(
       pushHistory: () => {
         const state = get();
         if (state._historyPaused) return;
-        
+
         const snapshot: HistorySnapshot = {
           settings: structuredClone(state.settings),
           annotations: structuredClone(state.annotations),
         };
-        
+
         set((s) => {
           s.past = [...s.past, snapshot].slice(-MAX_HISTORY_SIZE);
         });

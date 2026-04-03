@@ -26,6 +26,7 @@ pub fn copy_image_to_clipboard(image_path: &str) -> AppResult<()> {
 }
 
 /// Copy text to the system clipboard using macOS native APIs
+#[allow(dead_code)]
 pub fn copy_text_to_clipboard(text: &str) -> AppResult<()> {
     let escaped_text = text.replace('"', "\\\"");
     let script = format!(r#"set the clipboard to "{}""#, escaped_text);

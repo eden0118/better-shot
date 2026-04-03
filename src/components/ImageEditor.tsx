@@ -1,3 +1,22 @@
+/**
+ * Image Editor - Full-featured screenshot editing interface
+ *
+ * Features:
+ * - Background selection (gradients, solid colors, custom images)
+ * - Visual effects (blur, shadow, rounded corners)
+ * - Annotation tools (shapes, text, arrows, numbering)
+ * - History management (undo/redo)
+ * - Real-time preview with canvas rendering
+ *
+ * Keyboard shortcuts:
+ * - ⌘S: Save edited image
+ * - ⇧⌘C: Copy to clipboard
+ * - ⌘Z/⇧⌘Z: Undo/Redo
+ * - Esc: Cancel & return
+ *
+ * Uses Rust backend for optimized blur rendering
+ */
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";

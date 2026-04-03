@@ -1,3 +1,13 @@
+/**
+ * Application Entry Point
+ *
+ * Routes between two window contexts:
+ * - Main window (window.location): App component
+ * - Quick overlay window (overlay=1 query param): QuickOverlay component
+ *
+ * Global Toaster for notifications (sonner)
+ */
+
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";

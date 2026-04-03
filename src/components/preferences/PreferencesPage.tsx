@@ -1,17 +1,29 @@
+/**
+ * Preferences Page - Settings and configuration UI
+ *
+ * Manages user settings:
+ * - Save directory (screenshots location)
+ * - Auto-copy to clipboard toggle
+ * - Default background image/color selection
+ * - Preset screenshot sizes
+ * - Custom keyboard shortcuts
+ *
+ * Rendered inside Dialog on main window
+ * All changes auto-saved to OS-native storage (Tauri Store)
+ */
+
 import { useState, useEffect, useCallback } from "react";
 import { Store } from "@tauri-apps/plugin-store";
-import { ArrowLeft, Folder } from "lucide-react";
+import { Folder } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BackgroundImageSelector } from "./BackgroundImageSelector";
 import { KeyboardShortcutManager } from "./KeyboardShortcutManager";
 import { PresetSizesManager } from "./PresetSizesManager";
 import type { KeyboardShortcut } from "./KeyboardShortcutManager";
 
 interface PreferencesPageProps {
-  onBack: () => void;
   onSettingsChange?: () => void;
 }
 
@@ -20,7 +32,7 @@ interface GeneralSettings {
   copyToClipboard: boolean;
 }
 
-export function PreferencesPage({ onBack, onSettingsChange }: PreferencesPageProps) {
+export function PreferencesPage({ onSettingsChange }: PreferencesPageProps) {
   const [settings, setSettings] = useState<GeneralSettings>({
     saveDir: "",
     copyToClipboard: true,
@@ -84,33 +96,15 @@ export function PreferencesPage({ onBack, onSettingsChange }: PreferencesPagePro
 
   if (isLoading) {
     return (
-      <main className="min-h-dvh flex items-center justify-center bg-background">
+      <div className="flex items-center justify-center py-8">
         <div className="text-muted-foreground">Loading settings...</div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-dvh bg-background text-foreground">
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4 pb-2 border-b border-border">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="text-muted-foreground hover:text-foreground hover:bg-secondary"
-            aria-label="Back to main"
-          >
-            <ArrowLeft className="size-5" aria-hidden="true" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Preferences</h1>
-            <p className="text-foreground0 text-sm">Configure your app settings</p>
-          </div>
-        </div>
-
-        {/* General Settings */}
+    <div className="space-y-6">
+      {/* General Settings */}
         <Card className="bg-card border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold text-card-foreground">General</CardTitle>
@@ -218,7 +212,6 @@ export function PreferencesPage({ onBack, onSettingsChange }: PreferencesPagePro
             </div>
           </CardContent>
         </Card>
-      </div>
-    </main>
+    </div>
   );
 }

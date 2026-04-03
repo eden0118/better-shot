@@ -6,6 +6,19 @@ import { Store } from "@tauri-apps/plugin-store";
 import { Check, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useCallback, useEffect, useState } from "react";
+/**
+ * Quick Overlay - Floating screenshot preview window
+ *
+ * Lightweight floating window that appears after screenshot capture
+ * Displays preview of just-captured screenshot with quick actions:
+ * - Re-edit image
+ * - Copy to clipboard
+ * - Open in editor
+ *
+ * Uses motion/react for entrance animation
+ * Positioned in screen corner to avoid interference
+ */
+
 import { motion } from "motion/react";
 
 type OverlayEventPayload = {

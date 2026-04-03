@@ -1,3 +1,17 @@
+/**
+ * Onboarding Flow - First-launch guided tour
+ *
+ * 5-step introduction for new users:
+ * 1. Welcome - app overview
+ * 2. Capture Modes - region/window/fullscreen options
+ * 3. Image Editor - effects, backgrounds, annotations
+ * 4. Permissions - macOS Screen Recording setup
+ * 5. Ready - quick start tips
+ *
+ * Displayed on first launch, marked as complete in localStorage
+ * Returns to main UI after completion
+ */
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,7 +43,7 @@ const ONBOARDING_STEPS = [
   {
     id: "capture-modes",
     title: "Capture Modes",
-    description: "Better Shot offers three ways to capture your screen, each with a handy keyboard shortcut.",
+    description: "Better Shot offers two ways to capture your screen, each with a handy keyboard shortcut.",
     icon: (
       <svg className="size-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
@@ -49,22 +63,6 @@ const ONBOARDING_STEPS = [
     content: (
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 bg-secondary rounded-lg border border-border">
-            <div className="flex flex-col items-center gap-2">
-              <svg className="size-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 5a1 1 0 011-1h4a1 1 0 010 2H6v3a1 1 0 01-2 0V5zM4 19a1 1 0 001 1h4a1 1 0 100-2H6v-3a1 1 0 10-2 0v4zM20 5a1 1 0 00-1-1h-4a1 1 0 100 2h3v3a1 1 0 102 0V5zM20 19a1 1 0 01-1 1h-4a1 1 0 110-2h3v-3a1 1 0 112 0v4z"
-                />
-              </svg>
-              <div className="text-center">
-                <div className="text-sm font-medium text-foreground">Region</div>
-                <div className="text-xs text-foreground0 mt-1">Select area · ⌘⇧2</div>
-              </div>
-            </div>
-          </div>
           <div className="p-4 bg-secondary rounded-lg border border-border">
             <div className="flex flex-col items-center gap-2">
               <svg className="size-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,30 +101,8 @@ const ONBOARDING_STEPS = [
               </div>
             </div>
           </div>
-          <div className="p-4 bg-secondary rounded-lg border border-border">
-            <div className="flex flex-col items-center gap-2">
-              <svg className="size-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                />
-              </svg>
-              <div className="text-center">
-                <div className="text-sm font-medium text-foreground">OCR Region</div>
-                <div className="text-xs text-foreground0 mt-1">Extract text · ⌘⇧O</div>
-              </div>
-            </div>
-          </div>
         </div>
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-secondary rounded-lg border border-border">
-            <span className="text-sm text-foreground">Capture Region</span>
-            <kbd className="px-3 py-1 bg-card border border-border rounded text-foreground font-mono text-xs tabular-nums">
-              ⌘⇧2
-            </kbd>
-          </div>
           <div className="flex items-center justify-between p-3 bg-secondary rounded-lg border border-border">
             <span className="text-sm text-foreground">Capture Fullscreen</span>
             <kbd className="px-3 py-1 bg-card border border-border rounded text-foreground font-mono text-xs tabular-nums">
@@ -200,15 +176,9 @@ const ONBOARDING_STEPS = [
     content: (
       <div className="space-y-4">
         <div className="p-4 bg-secondary rounded-lg border border-border">
-          <div className="text-sm font-medium text-foreground mb-1">Auto-apply background</div>
-          <p className="text-xs text-muted-foreground text-pretty">
-            Instantly apply your default background and save, without opening the editor.
-          </p>
-        </div>
-        <div className="p-4 bg-secondary rounded-lg border border-border">
           <div className="text-sm font-medium text-foreground mb-1">Default background</div>
           <p className="text-xs text-muted-foreground text-pretty">
-            Choose the image Better Shot uses for auto-apply and as the starting point in the editor.
+            Choose the image Better Shot uses as the starting point in the editor.
           </p>
         </div>
         <div className="p-4 bg-secondary rounded-lg border border-border">
@@ -308,13 +278,8 @@ const ONBOARDING_STEPS = [
     content: (
       <div className="space-y-4 text-center">
         <p className="text-sm text-muted-foreground text-pretty">
-          Press <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘⇧2</kbd> to capture a region, or use the buttons on the main screen.
+          Press <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘⇧F</kbd> for fullscreen or <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘⇧D</kbd> for a window, or use the buttons on the main screen.
         </p>
-        <div className="p-4 bg-secondary/50 rounded-lg border border-border/50">
-          <p className="text-xs text-foreground0 text-pretty">
-            <span className="text-muted-foreground font-medium">Pro tip:</span> Enable "Auto-apply background" on the main screen for instant captures with your default background - no editing required.
-          </p>
-        </div>
       </div>
     ),
   },

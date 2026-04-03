@@ -7,15 +7,14 @@
 mod clipboard;
 mod commands;
 mod image;
-mod ocr;
 mod screenshot;
 mod utils;
 
 use commands::{
-    capture_all_monitors, capture_once, capture_region, copy_image_file_to_clipboard,
+    capture_all_monitors, capture_once, copy_image_file_to_clipboard,
     get_desktop_directory, get_image_dimensions, get_mouse_position, get_temp_directory, move_window_to_active_space,
     native_capture_fullscreen, native_capture_interactive, native_capture_window,
-    native_capture_ocr_region, play_screenshot_sound, render_image_with_effects_rust, save_edited_image,
+    play_screenshot_sound, render_image_with_effects_rust, save_edited_image,
 };
 
 use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
@@ -94,8 +93,9 @@ pub fn run() {
 
             // Create the main window but keep it hidden initially
             // This allows the React frontend to run and set up event listeners
-            let window =
-                WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+            let window = match app.get_webview_window("main") {
+                Some(w) => w,
+                None => WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                     .title("Better Shot")
                     .inner_size(1200.0, 800.0)
                     .min_inner_size(800.0, 600.0)
@@ -103,7 +103,8 @@ pub fn run() {
                     .resizable(true)
                     .decorations(true)
                     .visible(false) // Start hidden
-                    .build()?;
+                    .build()?,
+            };
 
             // Handle close request - hide instead of quit
             let window_clone = window.clone();
@@ -116,17 +117,20 @@ pub fn run() {
                 }
             });
 
-            let overlay = WebviewWindowBuilder::new(
-                app,
-                "quick-overlay",
-                WebviewUrl::App("index.html?overlay=1".into()),
-            )
-            .title("Better Shot – Quick Overlay")
-            .inner_size(360.0, 240.0)
-            .resizable(true)
-            .decorations(true)
-            .visible(false)
-            .build()?;
+            let overlay = match app.get_webview_window("quick-overlay") {
+                Some(w) => w,
+                None => WebviewWindowBuilder::new(
+                    app,
+                    "quick-overlay",
+                    WebviewUrl::App("index.html?overlay=1".into()),
+                )
+                .title("Better Shot – Quick Overlay")
+                .inner_size(360.0, 240.0)
+                .resizable(true)
+                .decorations(true)
+                .visible(false)
+                .build()?,
+            };
 
             let overlay_clone = overlay.clone();
             overlay.on_window_event(move |event| {
@@ -166,17 +170,11 @@ pub fn run() {
 
             let open_item = MenuItemBuilder::with_id("open", "Open Better Shot").build(app)?;
 
-            let capture_region_item =
-                MenuItemBuilder::with_id("capture_region", "Capture Region").build(app)?;
-
             let capture_screen_item =
                 MenuItemBuilder::with_id("capture_screen", "Capture Screen").build(app)?;
 
             let capture_window_item =
                 MenuItemBuilder::with_id("capture_window", "Capture Window").build(app)?;
-
-            let capture_ocr_item =
-                MenuItemBuilder::with_id("capture_ocr", "OCR Region").build(app)?;
 
             let preferences_item =
                 MenuItemBuilder::with_id("preferences", "Preferences...")
@@ -191,10 +189,8 @@ pub fn run() {
                 .items(&[
                     &open_item,
                     &PredefinedMenuItem::separator(app)?,
-                    &capture_region_item,
                     &capture_screen_item,
                     &capture_window_item,
-                    &capture_ocr_item,
                     &PredefinedMenuItem::separator(app)?,
                     &preferences_item,
                     &PredefinedMenuItem::separator(app)?,
@@ -210,19 +206,16 @@ pub fn run() {
                         "open" => {
                             if let Err(e) = show_main_window(app) {
                                 eprintln!("Failed to show window: {}", e);
+                            } else {
+                                // Tell the React side to resize to navbar mode
+                                let _ = app.emit("show-navbar", ());
                             }
-                        }
-                        "capture_region" => {
-                            let _ = app.emit("capture-triggered", ());
                         }
                         "capture_screen" => {
                             let _ = app.emit("capture-fullscreen", ());
                         }
                         "capture_window" => {
                             let _ = app.emit("capture-window", ());
-                        }
-                        "capture_ocr" => {
-                            let _ = app.emit("capture-ocr", ());
                         }
                         "preferences" => {
                             if let Err(e) = show_main_window(app) {
@@ -244,7 +237,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             capture_once,
             capture_all_monitors,
-            capture_region,
             save_edited_image,
             render_image_with_effects_rust,
             get_desktop_directory,
@@ -253,7 +245,6 @@ pub fn run() {
             native_capture_interactive,
             native_capture_fullscreen,
             native_capture_window,
-            native_capture_ocr_region,
             play_screenshot_sound,
             get_mouse_position,
             move_window_to_active_space,

@@ -1,9 +1,25 @@
+/**
+ * Better Shot - Main Application Component
+ *
+ * Manages the core lifecycle and UI states:
+ * - Onboarding flow (first launch)
+ * - Main UI (capture buttons + shortcuts reference)
+ * - Image editor (screenshot editing & annotation)
+ * - Settings dialog (preferences & keyboard shortcuts)
+ *
+ * Window management:
+ * - Main mode: 1200x800 with decorations (full application window)
+ * - Editing mode: 1200x800 with editor interface
+ * - Settings: Dialog overlay on main window
+ *
+ * Event flow:
+ * - Keyboard shortcuts trigger capture modes
+ * - Screenshots route through editor then save
+ * - Settings persisted to OS-native storage
+ */
+
 import { editorActions } from "@/stores/editorStore";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { isAssetId, isDataUrl, migrateStoredValue } from "@/lib/asset-registry";
-import { processScreenshotWithDefaultBackground } from "@/lib/auto-process";
 import { hasCompletedOnboarding } from "@/lib/onboarding";
 import { invoke } from "@tauri-apps/api/core";
 import { emitTo, listen } from "@tauri-apps/api/event";
@@ -15,23 +31,20 @@ import {
 } from "@tauri-apps/api/window";
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import { Store } from "@tauri-apps/plugin-store";
-import { AppWindowMac, Crop, Monitor, ScanText } from "lucide-react";
 import { toast } from "sonner";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardShortcut } from "./components/preferences/KeyboardShortcutManager";
-import { SettingsIcon } from "./components/SettingsIcon";
-import { PresetSizesQuickSelect } from "./components/PresetSizesQuickSelect";
-import { SaveSizeDialog } from "./components/SaveSizeDialog";
-import { FixedSizesSelector, type FixedSize } from "./components/FixedSizesSelector";
-import { usePresetSizes, type PresetSize } from "./hooks/usePresetSizes";
+import { PreferencesPage } from "./components/preferences/PreferencesPage";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AppWindowMac, Scan, Settings } from "lucide-react";
 
 // Lazy load heavy components
 const ImageEditor = lazy(() => import("./components/ImageEditor").then(m => ({ default: m.ImageEditor })));
 const OnboardingFlow = lazy(() => import("./components/onboarding/OnboardingFlow").then(m => ({ default: m.OnboardingFlow })));
-const PreferencesPage = lazy(() => import("./components/preferences/PreferencesPage").then(m => ({ default: m.PreferencesPage })));
 
-type AppMode = "main" | "editing" | "preferences";
-type CaptureMode = "region" | "fullscreen" | "window" | "ocr";
+type AppMode = "main" | "editing" | "menu";
+type CaptureMode = "fullscreen" | "window" | "region";
 
 // Loading fallback for lazy loaded components
 function LoadingFallback() {
@@ -49,27 +62,20 @@ function LoadingFallback() {
 }
 
 const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
-  { id: "region", action: "Capture Region", shortcut: "CommandOrControl+Shift+2", enabled: true },
-  { id: "fullscreen", action: "Capture Screen", shortcut: "CommandOrControl+Shift+F", enabled: false },
-  { id: "window", action: "Capture Window", shortcut: "CommandOrControl+Shift+D", enabled: false },
-  { id: "ocr", action: "OCR Region", shortcut: "CommandOrControl+Shift+O", enabled: false },
+  { id: "show-menu", action: "Show Capture Menu", shortcut: "CommandOrControl+Shift+F", enabled: true },
 ];
 
-function formatShortcut(shortcut: string): string {
-  return shortcut
-    .replace(/CommandOrControl/g, "⌘")
-    .replace(/Command/g, "⌘")
-    .replace(/Control/g, "⌃")
-    .replace(/Shift/g, "⇧")
-    .replace(/Alt/g, "⌥")
-    .replace(/Option/g, "⌥")
-    .replace(/\+/g, "");
-}
-
+/**
+ * Restore main application window with full editor size
+ * Called when entering editing mode or transitioning from onboarding
+ */
 async function restoreWindowOnScreen(mouseX?: number, mouseY?: number) {
   const appWindow = getCurrentWindow();
-  const windowWidth = 1200;
-  const windowHeight = 800;
+  const windowWidth = 600;
+  const windowHeight = 120;
+  await appWindow.setDecorations(true);
+  await appWindow.setResizable(true);
+  await appWindow.setMinSize(new LogicalSize(800, 600));
   await appWindow.setSize(new LogicalSize(windowWidth, windowHeight));
   if (mouseX !== undefined && mouseY !== undefined) {
     try {
@@ -112,11 +118,30 @@ async function restoreWindow() {
   await restoreWindowOnScreen();
 }
 
+/**
+ * Initialize main application window (1200x800)
+ * Called on startup after onboarding or when exiting editing mode
+ */
+async function showNavbarWindow() {
+  const appWindow = getCurrentWindow();
+  await appWindow.setDecorations(true);
+  await appWindow.setResizable(true);
+  await appWindow.setMinSize(new LogicalSize(800, 600));
+  await appWindow.setSize(new LogicalSize(1200, 800));
+  await appWindow.center();
+  await appWindow.show();
+  await appWindow.setFocus();
+}
+
 async function showQuickOverlay(
   screenshotPath: string,
   mouseX?: number,
   mouseY?: number,
 ) {
+  /**
+   * Display quick overlay window for immediate screenshot preview
+   * Positioned in screen corner with pre-saved screenshot available
+   */
   try {
     const store = await Store.load("settings.json", {
       defaults: {},
@@ -216,109 +241,28 @@ async function showQuickOverlay(
 
 function App() {
   const [mode, setMode] = useState<AppMode>("main");
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [saveDir, setSaveDir] = useState<string>("");
   const [copyToClipboard, setCopyToClipboard] = useState(true);
-  const [autoApplyBackground, setAutoApplyBackground] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [tempScreenshotPath, setTempScreenshotPath] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [shortcuts, setShortcuts] = useState<KeyboardShortcut[]>(DEFAULT_SHORTCUTS);
-  const [settingsVersion, setSettingsVersion] = useState(0);
   const [tempDir, setTempDir] = useState<string>("/tmp");
   const [selectedPresetSize, setSelectedPresetSize] = useState<{ width: number; height: number; name: string } | null>(null);
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [capturedDimensions, setCapturedDimensions] = useState<{ width: number; height: number } | null>(null);
-  const [showFixedSizesSelector, setShowFixedSizesSelector] = useState(false);
-  const [pendingCaptureMode, setPendingCaptureMode] = useState<CaptureMode | null>(null);
-  const [selectedFixedSize, setSelectedFixedSize] = useState<FixedSize | null>(null);
 
   // Refs to hold current values for use in callbacks that may have stale closures
-  const settingsRef = useRef({ autoApplyBackground, saveDir, copyToClipboard, tempDir });
+  const settingsRef = useRef({ saveDir, copyToClipboard, tempDir });
   const registeredShortcutsRef = useRef<Set<string>>(new Set());
   const lastCaptureTimeRef = useRef(0);
-  const fixedSizeToPresetRef = useRef<PresetSize | null>(null);
   const handleCaptureRef = useRef<((captureMode?: CaptureMode) => Promise<void>) | null>(null);
-
-  // Get preset sizes hook first
-  const { presetSizes, addPresetSize } = usePresetSizes();
-
-  // Convert fixed size to preset for region selector
-  const presetSizesForRegion = useMemo(() => {
-    if (!selectedFixedSize) return presetSizes;
-    const fixedPreset: PresetSize = {
-      id: selectedFixedSize.id,
-      name: selectedFixedSize.name,
-      width: selectedFixedSize.width,
-      height: selectedFixedSize.height,
-    };
-    fixedSizeToPresetRef.current = fixedPreset;
-    return [fixedPreset, ...presetSizes];
-  }, [selectedFixedSize, presetSizes]);
 
   // Keep ref in sync with state
   useEffect(() => {
-    settingsRef.current = { autoApplyBackground, saveDir, copyToClipboard, tempDir };
-  }, [autoApplyBackground, saveDir, copyToClipboard, tempDir]);
-
-  // Handle fixed size selection and continue with capture
-  useEffect(() => {
-    if (selectedFixedSize && pendingCaptureMode === "region") {
-      // Reset states first
-      setPendingCaptureMode(null);
-
-      // Schedule capture after states are updated
-      setTimeout(() => {
-        // Re-call capture with the selectedFixedSize now set
-        lastCaptureTimeRef.current = 0;
-        if (handleCaptureRef.current) {
-          handleCaptureRef.current("region");
-        }
-      }, 50);
-    }
-  }, [selectedFixedSize, pendingCaptureMode]);
+    settingsRef.current = { saveDir, copyToClipboard, tempDir };
+  }, [saveDir, copyToClipboard, tempDir]);
 
   // Load settings function
-  const loadSettings = useCallback(async () => {
-    try {
-      const store = await Store.load("settings.json", {
-        defaults: {
-          copyToClipboard: true,
-          autoApplyBackground: false,
-        },
-        autoSave: true,
-      });
-
-      const savedCopyToClip = await store.get<boolean>("copyToClipboard");
-      if (savedCopyToClip !== null && savedCopyToClip !== undefined) {
-        setCopyToClipboard(savedCopyToClip);
-      }
-
-      const savedAutoApply = await store.get<boolean>("autoApplyBackground");
-      if (savedAutoApply !== null && savedAutoApply !== undefined) {
-        setAutoApplyBackground(savedAutoApply);
-      }
-
-      const savedSaveDir = await store.get<string>("saveDir");
-      if (savedSaveDir) {
-        setSaveDir(savedSaveDir);
-      }
-
-      const savedShortcuts = await store.get<KeyboardShortcut[]>("keyboardShortcuts");
-      if (savedShortcuts && savedShortcuts.length > 0) {
-        // Merge saved shortcuts with defaults, preserving all saved values
-        // Only add missing default shortcuts that don't exist in saved
-        const savedIds = new Set(savedShortcuts.map((s) => s.id));
-        const missingDefaults = DEFAULT_SHORTCUTS.filter((d) => !savedIds.has(d.id));
-        const finalShortcuts = [...savedShortcuts, ...missingDefaults];
-        setShortcuts(finalShortcuts);
-      } else {
-        setShortcuts(DEFAULT_SHORTCUTS);
-      }
-    } catch (err) {
-      console.error("Failed to load settings:", err);
-    }
-  }, []);
 
   // Initial app setup
   useEffect(() => {
@@ -329,7 +273,6 @@ function App() {
         desktopPath = await invoke<string>("get_desktop_directory");
       } catch (err) {
         console.error("Failed to get Desktop directory:", err);
-        setError(`Failed to get Desktop directory: ${err instanceof Error ? err.message : String(err)}`);
       }
 
       // Get the system temp directory (canonicalized to resolve symlinks)
@@ -346,7 +289,6 @@ function App() {
         const store = await Store.load("settings.json", {
           defaults: {
             copyToClipboard: true,
-            autoApplyBackground: false,
           },
           autoSave: true,
         });
@@ -354,11 +296,6 @@ function App() {
         const savedCopyToClip = await store.get<boolean>("copyToClipboard");
         if (savedCopyToClip !== null && savedCopyToClip !== undefined) {
           setCopyToClipboard(savedCopyToClip);
-        }
-
-        const savedAutoApply = await store.get<boolean>("autoApplyBackground");
-        if (savedAutoApply !== null && savedAutoApply !== undefined) {
-          setAutoApplyBackground(savedAutoApply);
         }
 
         // Only use saved directory if it's a non-empty string, otherwise use desktop
@@ -404,6 +341,9 @@ function App() {
     const shouldShowOnboarding = !hasCompletedOnboarding();
     if (shouldShowOnboarding) {
       setShowOnboarding(true);
+    } else {
+      // Resize & show the compact toolbar
+      showNavbarWindow();
     }
 
     // DEV ONLY: Uncomment to test editor with any image file
@@ -411,55 +351,14 @@ function App() {
     // setMode("editing");
   }, []);
 
-  const handleSavePreset = useCallback(async (presetName: string) => {
-    if (!capturedDimensions) return;
-
-    try {
-      await addPresetSize(presetName, capturedDimensions.width, capturedDimensions.height);
-      toast.success("Preset saved!", {
-        description: `${presetName} (${capturedDimensions.width}×${capturedDimensions.height}px)`,
-      });
-      setShowSaveDialog(false);
-      setCapturedDimensions(null);
-      // Proceed to editing mode
-      setMode("editing");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      toast.error("Failed to save preset", {
-        description: errorMessage,
-      });
-    }
-  }, [capturedDimensions, addPresetSize]);
-
-  const handleSkipSavePreset = useCallback(() => {
-    setShowSaveDialog(false);
-    setCapturedDimensions(null);
-    // Proceed to editing mode
-    setMode("editing");
-  }, []);
-
-  const handleFixedSizeSelect = useCallback((fixedSize: FixedSize) => {
-    setSelectedFixedSize(fixedSize);
-    setShowFixedSizesSelector(false);
-    setPendingCaptureMode("region");
-    toast.success(`Using fixed size: ${fixedSize.name} (${fixedSize.width}×${fixedSize.height}px)`);
-  }, []);
-
-  const handleCancelFixedSize = useCallback(() => {
-    setShowFixedSizesSelector(false);
-    setPendingCaptureMode(null);
-    setSelectedFixedSize(null);
-    setIsCapturing(false);
-  }, []);
-
-  const handleCapture = useCallback(async (captureMode: CaptureMode = "region") => {
-    // For region capture, show fixed sizes selector first if not already selected
-    if (captureMode === "region" && !selectedFixedSize) {
-      setShowFixedSizesSelector(true);
-      setPendingCaptureMode("region");
-      return;
-    }
-
+  const handleCapture = useCallback(async (captureMode: CaptureMode = "fullscreen") => {
+    /**
+     * Main capture flow:
+     * 1. Debounce to prevent rapid consecutive captures
+     * 2. Hide app window to capture clean screen
+     * 3. Invoke Tauri command to capture screenshot
+     * 4. Route screenshot to editor via mode transition
+     */
     const now = Date.now();
     if (now - lastCaptureTimeRef.current < 600) {
       return;
@@ -469,63 +368,20 @@ function App() {
     if (isCapturing) return;
 
     setIsCapturing(true);
-    setError(null);
 
     const appWindow = getCurrentWindow();
 
     // Read current settings from ref to avoid stale closure issues
-    const { autoApplyBackground: shouldAutoApply, saveDir: currentSaveDir, copyToClipboard: shouldCopyToClipboard, tempDir: currentTempDir } = settingsRef.current;
+    const { tempDir: currentTempDir } = settingsRef.current;
 
     try {
       await appWindow.hide();
       await new Promise((resolve) => setTimeout(resolve, 400));
 
-      if (captureMode === "ocr") {
-        try {
-          const recognizedText = await invoke<string>("native_capture_ocr_region", {
-            saveDir: currentTempDir,
-          });
-
-          toast.success("Text copied to clipboard!", {
-            description: recognizedText.length > 50 ? `${recognizedText.substring(0, 50)}...` : recognizedText,
-            duration: 3000,
-          });
-
-          await appWindow.hide();
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : String(err);
-          if (errorMessage.includes("cancelled") || errorMessage.includes("was cancelled")) {
-            await appWindow.hide();
-          } else if (errorMessage.includes("already in progress")) {
-            setError("Please wait for the current screenshot to complete");
-            await appWindow.hide();
-          } else if (
-            errorMessage.toLowerCase().includes("permission") ||
-            errorMessage.toLowerCase().includes("access") ||
-            errorMessage.toLowerCase().includes("denied")
-          ) {
-            setError(
-              "Screen Recording permission required. Please go to System Settings > Privacy & Security > Screen Recording and enable access for Better Shot, then restart the app."
-            );
-            await restoreWindow();
-          } else {
-            setError(errorMessage);
-            toast.error("OCR failed", {
-              description: errorMessage,
-              duration: 5000,
-            });
-            await appWindow.hide();
-          }
-        } finally {
-          setIsCapturing(false);
-        }
-        return;
-      }
-
-      const commandMap: Record<Exclude<CaptureMode, "ocr">, string> = {
-        region: "native_capture_interactive",
+      const commandMap: Record<CaptureMode, string> = {
         fullscreen: "native_capture_fullscreen",
         window: "native_capture_window",
+        region: "native_capture_interactive",
       };
 
       const screenshotPath = await invoke<string>(commandMap[captureMode], {
@@ -546,49 +402,7 @@ function App() {
 
       invoke("play_screenshot_sound").catch(console.error);
 
-      if (shouldAutoApply) {
-        try {
-          const processedImageData =
-            await processScreenshotWithDefaultBackground(screenshotPath);
-
-          const savedPath = await invoke<string>("save_edited_image", {
-            imageData: processedImageData,
-            saveDir: currentSaveDir,
-            copyToClip: shouldCopyToClipboard,
-          });
-
-          await appWindow.hide();
-          await showQuickOverlay(savedPath, mouseX, mouseY);
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : String(err);
-          setError(`Failed to process screenshot: ${errorMessage}`);
-          await restoreWindow();
-        } finally {
-          setIsCapturing(false);
-        }
-        return;
-      }
-
       setTempScreenshotPath(screenshotPath);
-
-      // For region captures, check dimensions and show save dialog
-      if (captureMode === "region") {
-        try {
-          const [width, height] = await invoke<[number, number]>("get_image_dimensions", {
-            image_path: screenshotPath,
-          });
-          setCapturedDimensions({ width, height });
-          setShowSaveDialog(true);
-          await restoreWindowOnScreen(mouseX, mouseY);
-          setIsCapturing(false);
-          return;
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : String(err);
-          console.error("Failed to get image dimensions:", errorMessage);
-          // Continue with regular flow if we can't get dimensions
-        }
-      }
-
       setMode("editing");
       try {
         await invoke("move_window_to_active_space");
@@ -598,37 +412,32 @@ function App() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       if (errorMessage.includes("cancelled") || errorMessage.includes("was cancelled")) {
-        // Only restore window if not in auto-apply mode
-        if (!shouldAutoApply) {
-          await restoreWindow();
-        }
+        await restoreWindow();
       } else if (errorMessage.includes("already in progress")) {
-        setError("Please wait for the current screenshot to complete");
-        if (!shouldAutoApply) {
-          await restoreWindow();
-        }
+        toast.error("Screenshot already in progress", {
+          description: "Please wait for the current screenshot to complete",
+        });
+        await restoreWindow();
       } else if (
         errorMessage.toLowerCase().includes("permission") ||
         errorMessage.toLowerCase().includes("access") ||
         errorMessage.toLowerCase().includes("denied")
       ) {
-        setError(
-          "Screen Recording permission required. Please go to System Settings > Privacy & Security > Screen Recording and enable access for Better Shot, then restart the app."
-        );
-        // Always show window for permission errors so user can see the message
+        toast.error("Permission required", {
+          description: "Please go to System Settings > Privacy & Security > Screen Recording and enable access for Better Shot, then restart the app.",
+          duration: 6000,
+        });
         await restoreWindow();
       } else {
-        setError(errorMessage);
-        if (!shouldAutoApply) {
-          await restoreWindow();
-        }
+        toast.error("Screenshot failed", {
+          description: errorMessage,
+        });
+        await restoreWindow();
       }
     } finally {
       setIsCapturing(false);
-      // Reset fixed size after capture attempt
-      setSelectedFixedSize(null);
     }
-  }, [settingsRef, lastCaptureTimeRef, selectedFixedSize, presetSizesForRegion]);
+  }, [settingsRef, lastCaptureTimeRef]);
 
   // Setup hotkeys whenever settings change
   useEffect(() => {
@@ -644,29 +453,28 @@ function App() {
         }
         registeredShortcutsRef.current.clear();
 
-        const actionMap: Record<string, CaptureMode> = {
-          "Capture Region": "region",
-          "Capture Screen": "fullscreen",
-          "Capture Window": "window",
-          "OCR Region": "ocr",
-        };
-
         for (const shortcut of shortcuts) {
           if (!shortcut.enabled) continue;
 
-          const action = actionMap[shortcut.action];
-          if (action) {
+          if (shortcut.id === "show-menu") {
             try {
-              await register(shortcut.shortcut, () => handleCapture(action));
+              await register(shortcut.shortcut, async () => {
+                await showNavbarWindow();
+              });
               registeredShortcutsRef.current.add(shortcut.shortcut);
             } catch (err) {
-              console.error(`Failed to register shortcut ${shortcut.shortcut}:`, err);
+              console.error(
+                `Failed to register shortcut ${shortcut.shortcut}:`,
+                err
+              );
             }
           }
         }
       } catch (err) {
         console.error("Failed to setup hotkeys:", err);
-        setError(`Hotkey registration failed: ${err instanceof Error ? err.message : String(err)}`);
+        toast.error("Failed to setup hotkeys", {
+          description: err instanceof Error ? err.message : String(err),
+        });
       }
     };
 
@@ -679,7 +487,7 @@ function App() {
       }
       registeredShortcutsRef.current.clear();
     };
-  }, [shortcuts, settingsVersion, handleCapture]);
+  }, [shortcuts]);
 
   // Update ref whenever handleCapture changes
   useEffect(() => {
@@ -691,35 +499,17 @@ function App() {
     let unlisten2: (() => void) | null = null;
     let unlisten3: (() => void) | null = null;
     let unlisten4: (() => void) | null = null;
-    let unlisten5: (() => void) | null = null;
-    let unlisten6: (() => void) | null = null;
-    let unlisten7: (() => void) | null = null;
-    let unlisten8: (() => void) | null = null;
     let mounted = true;
 
     const setupListeners = async () => {
       // Use refs to always call the latest handler without re-registering
-      unlisten1 = await listen("capture-triggered", () => {
-        if (mounted && handleCaptureRef.current) handleCaptureRef.current("region");
-      });
-      unlisten2 = await listen("capture-fullscreen", () => {
+      unlisten1 = await listen("capture-fullscreen", () => {
         if (mounted && handleCaptureRef.current) handleCaptureRef.current("fullscreen");
       });
-      unlisten3 = await listen("capture-window", () => {
+      unlisten2 = await listen("capture-window", () => {
         if (mounted && handleCaptureRef.current) handleCaptureRef.current("window");
       });
-      unlisten4 = await listen("capture-ocr", () => {
-        if (mounted && handleCaptureRef.current) handleCaptureRef.current("ocr");
-      });
-      unlisten5 = await listen("open-preferences", () => {
-        if (mounted) setMode("preferences");
-      });
-      unlisten6 = await listen("auto-apply-changed", (event: { payload: boolean }) => {
-        if (mounted) {
-          setAutoApplyBackground(event.payload);
-        }
-      });
-      unlisten7 = await listen<{ path: string }>("open-editor-for-path", async (event) => {
+      unlisten3 = await listen<{ path: string }>("open-editor-for-path", async (event) => {
         if (!mounted) return;
         const { path } = event.payload;
         setTempScreenshotPath(path);
@@ -730,7 +520,7 @@ function App() {
         }
         await restoreWindow();
       });
-      unlisten8 = await listen("show-last-capture-overlay", async () => {
+      unlisten4 = await listen("show-last-capture-overlay", async () => {
         if (!mounted) return;
         try {
           const store = await Store.load("settings.json");
@@ -742,6 +532,16 @@ function App() {
           console.error("Failed to show last capture overlay:", error);
         }
       });
+
+      await listen("open-preferences", () => {
+        if (!mounted) return;
+        setSettingsOpen(true);
+      });
+
+      await listen("show-navbar", async () => {
+        if (!mounted) return;
+        await showNavbarWindow();
+      });
     };
 
     setupListeners();
@@ -752,39 +552,61 @@ function App() {
       unlisten2?.();
       unlisten3?.();
       unlisten4?.();
-      unlisten5?.();
-      unlisten6?.();
-      unlisten7?.();
-      unlisten8?.();
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Reload settings when coming back from preferences
-  const handleSettingsChange = useCallback(async () => {
-    await loadSettings();
-    setSettingsVersion(v => v + 1);
-  }, [loadSettings]);
-
-  // Toggle auto-apply from main page
-  const handleAutoApplyToggle = useCallback(async (checked: boolean) => {
-    setAutoApplyBackground(checked);
-    try {
-      const store = await Store.load("settings.json");
-      await store.set("autoApplyBackground", checked);
-      await store.save();
-    } catch (err) {
-      console.error("Failed to save auto-apply setting:", err);
-      toast.error("Failed to save setting");
+  // Reload shortcuts when settings dialog closes
+  const prevSettingsOpenRef = useRef(false);
+  useEffect(() => {
+    if (prevSettingsOpenRef.current && !settingsOpen) {
+      Store.load("settings.json")
+        .then((store) => store.get<KeyboardShortcut[]>("keyboardShortcuts"))
+        .then((saved) => {
+          if (saved && saved.length > 0) setShortcuts(saved);
+        })
+        .catch(console.error);
     }
-  }, []);
+    prevSettingsOpenRef.current = settingsOpen;
+  }, [settingsOpen]);
 
-  const handleBackFromPreferences = useCallback(async () => {
-    await loadSettings();
-    setSettingsVersion(v => v + 1);
-    setMode("main");
-  }, [loadSettings]);
+  // Adjust window size when mode changes
+  useEffect(() => {
+    const adjustWindow = async () => {
+      if (mode === "editing") {
+        await restoreWindowOnScreen();
+      } else if (mode === "main") {
+        await showNavbarWindow();
+      }
+    };
+    adjustWindow();
+  }, [mode]);
+
+  // Adjust window for onboarding
+  useEffect(() => {
+    const adjustOnboarding = async () => {
+      if (showOnboarding) {
+        // Show full-size window for onboarding
+        const appWindow = getCurrentWindow();
+        await appWindow.setDecorations(true);
+        await appWindow.setResizable(true);
+        await appWindow.setMinSize(new LogicalSize(800, 600));
+        await appWindow.setSize(new LogicalSize(1200, 800));
+        await appWindow.center();
+        await appWindow.show();
+        await appWindow.setFocus();
+      }
+    };
+    adjustOnboarding();
+  }, [showOnboarding]);
 
   async function handleEditorSave(editedImageData: string) {
+    /**
+     * Save edited image:
+     * 1. Invoke Rust command to save with effects
+     * 2. Copy to clipboard if enabled
+     * 3. Return to main UI
+     * 4. Reset editor state
+     */
     try {
       const savedPath = await invoke<string>("save_edited_image", {
         imageData: editedImageData,
@@ -800,15 +622,16 @@ function App() {
       editorActions.reset();
       setMode("main");
       setTempScreenshotPath(null);
+      await showNavbarWindow();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage);
       toast.error("Failed to save image", {
         description: errorMessage,
         duration: 5000,
       });
       editorActions.reset();
       setMode("main");
+      await showNavbarWindow();
     }
   }
 
@@ -816,18 +639,22 @@ function App() {
     editorActions.reset();
     setMode("main");
     setTempScreenshotPath(null);
+    await showNavbarWindow();
   }
 
-  // Get shortcut display for a specific action
-  const getShortcutDisplay = (actionId: string): string => {
-    const shortcut = shortcuts.find(s => s.id === actionId);
-    if (shortcut && shortcut.enabled) {
-      return formatShortcut(shortcut.shortcut);
-    }
-    // Fallback to defaults
-    const defaultShortcut = DEFAULT_SHORTCUTS.find(s => s.id === actionId);
-    return defaultShortcut ? formatShortcut(defaultShortcut.shortcut) : "—";
-  };
+
+  if (showOnboarding) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <OnboardingFlow
+          onComplete={() => {
+            setShowOnboarding(false);
+            showNavbarWindow();
+          }}
+        />
+      </Suspense>
+    );
+  }
 
   if (mode === "editing" && tempScreenshotPath) {
     return (
@@ -843,227 +670,147 @@ function App() {
     );
   }
 
-  if (showOnboarding) {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <OnboardingFlow
-          onComplete={() => {
-            setShowOnboarding(false);
-          }}
-        />
-      </Suspense>
-    );
-  }
-
-  if (mode === "preferences") {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <PreferencesPage
-          onBack={handleBackFromPreferences}
-          onSettingsChange={handleSettingsChange}
-        />
-      </Suspense>
-    );
-  }
-
   return (
-    <>
-      <main className="min-h-dvh flex flex-col items-center justify-center p-8 bg-background text-foreground">
-        <div className="w-full max-w-2xl space-y-6">
-        <div className="relative text-center space-y-2">
-          <div className="absolute top-0 right-0">
-            <SettingsIcon onClick={() => setMode("preferences")} />
-          </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-5xl font-bold text-foreground text-balance">Better Shot</h1>
-              <span className="rounded-full border border-border bg-card px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
-                v{__APP_VERSION__}
-              </span>
-            </div>
-            <p className="text-muted-foreground text-sm text-pretty">Capture, edit, and enhance your screenshots with professional quality.</p>
-          </div>
+    // Main application UI (mode="main")
+    // Displays: capture buttons, shortcuts reference, settings dialog
+    <main className="h-dvh w-full flex flex-col items-center justify-center px-6 bg-background relative">
+      {/* Settings button - top right */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-6 right-6"
+          onClick={() => setSettingsOpen(true)}
+          aria-label="Open settings"
+        >
+          <Settings className="size-5" aria-hidden="true" />
+        </Button>
+
+        <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Preferences</DialogTitle>
+          </DialogHeader>
+          <PreferencesPage
+            onSettingsChange={() => {
+              Store.load("settings.json")
+                .then((store) => store.get<KeyboardShortcut[]>("keyboardShortcuts"))
+                .then((saved) => {
+                  if (saved && saved.length > 0) setShortcuts(saved);
+                })
+                .catch(console.error);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Main content */}
+      <div className="text-center space-y-8 max-w-2xl">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold text-foreground">Better Shot</h1>
+          <p className="text-muted-foreground">Capture, edit, and annotate your screenshots with professional quality.</p>
         </div>
 
-        <Card className="bg-card border-border">
-          <CardContent className="p-6 space-y-6">
-            {/* Preset Sizes Quick Select */}
-            <PresetSizesQuickSelect
-              onSelectSize={(width, height, name) => {
-                setSelectedPresetSize({ width, height, name });
-                toast.success(`Using preset: ${name} (${width}×${height}px)`);
-              }}
-            />
+        {/* Three capture buttons */}
+        <div className="grid grid-cols-3 gap-4">
+          <Button
+            onClick={() => handleCapture("region")}
+            disabled={isCapturing}
+            className="h-12 gap-2 rounded-lg"
+          >
+            <Scan className="size-4" aria-hidden="true" />
+            Region
+          </Button>
+          <Button
+            onClick={() => handleCapture("fullscreen")}
+            disabled={isCapturing}
+            className="h-12 gap-2 rounded-lg"
+            variant="default"
+          >
+            <div className="size-3 rounded-full" aria-hidden="true" />
+            Screen
+          </Button>
+          <Button
+            onClick={() => handleCapture("window")}
+            disabled={isCapturing}
+            className="h-12 gap-2 rounded-lg"
+          >
+            <AppWindowMac className="size-4" aria-hidden="true" />
+            Window
+          </Button>
+        </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                onClick={() => handleCapture("region")}
-                disabled={isCapturing}
-                variant="cta"
-                size="lg"
-                className="py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Crop className="size-4" aria-hidden="true" />
-                Region
-              </Button>
-              <Button
-                onClick={() => handleCapture("ocr")}
-                disabled={isCapturing}
-                variant="cta"
-                size="lg"
-                className="py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ScanText className="size-4" aria-hidden="true" />
-                OCR Region
-              </Button>
-              <Button
-                onClick={() => handleCapture("fullscreen")}
-                disabled={isCapturing}
-                variant="cta"
-                size="lg"
-                className="py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Monitor className="size-4" aria-hidden="true" />
-                Screen
-              </Button>
-              <Button
-                onClick={() => handleCapture("window")}
-                disabled={isCapturing}
-                variant="cta"
-                size="lg"
-                className="py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <AppWindowMac className="size-4" aria-hidden="true" />
-                Window
-              </Button>
+        {/* Auto-apply background checkbox */}
+        <div className="flex items-center justify-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            id="auto-background"
+            className="size-4 rounded border-border"
+            defaultChecked
+          />
+          <label htmlFor="auto-background" className="text-muted-foreground cursor-pointer">
+            Auto-apply background
+            <span className="text-xs text-muted-foreground/70 ml-1">(Apply default background and save instantly)</span>
+          </label>
+        </div>
+
+        {/* Keyboard shortcuts */}
+        <div className="border-t border-border pt-6 space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">Keyboard Shortcuts</h2>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Region</span>
+              <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs">
+                ⌘⇧2
+              </kbd>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Screen</span>
+              <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs">
+                ⌘⇧F
+              </kbd>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Window</span>
+              <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs">
+                ⌘⇧D
+              </kbd>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Cancel</span>
+              <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs">
+                Esc
+              </kbd>
             </div>
 
-            {/* Quick Toggle for Auto-apply */}
-            <div className="flex items-center justify-between py-2 px-1">
-              <div className="flex-1">
-                <label htmlFor="auto-apply-toggle" className="text-sm font-medium text-foreground cursor-pointer block">
-                  Auto-apply background
-                </label>
-                <p className="text-xs text-muted-foreground">Apply default background and save instantly</p>
-              </div>
-              <Switch
-                id="auto-apply-toggle"
-                checked={autoApplyBackground}
-                onCheckedChange={handleAutoApplyToggle}
-              />
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Save</span>
+              <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs">
+                ⌘S
+              </kbd>
             </div>
-
-            {isCapturing && (
-              <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-                <svg className="animate-spin size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Waiting for selection...
-              </div>
-            )}
-
-            {error && (
-              <div className="p-4 bg-red-950/30 border border-red-800/50 rounded-lg">
-                <div className="font-medium text-red-300 mb-1">Error</div>
-                <div className="text-red-400 text-sm text-pretty">{error}</div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-5 space-y-4">
-            <h3 className="font-medium text-foreground text-sm">Keyboard Shortcuts</h3>
-
-            {/* Capture Shortcuts */}
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Capture</p>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Region</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
-                    {getShortcutDisplay("region")}
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">OCR Region</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
-                    {getShortcutDisplay("ocr")}
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Screen</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
-                    {getShortcutDisplay("fullscreen")}
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Window</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">
-                    {getShortcutDisplay("window")}
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Cancel</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">Esc</kbd>
-                </div>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Copy</span>
+              <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs">
+                ⌘⇧C
+              </kbd>
             </div>
-
-            {/* Editor Shortcuts */}
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Editor</p>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Save</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘S</kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Copy</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⇧⌘C</kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Undo</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌘Z</kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Redo</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⇧⌘Z</kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Delete annotation</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">⌫</kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Close editor</span>
-                  <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs tabular-nums">Esc</kbd>
-                </div>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Undo</span>
+              <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs">
+                ⌘Z
+              </kbd>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Redo</span>
+              <kbd className="px-2 py-1 bg-secondary border border-border rounded text-foreground font-mono text-xs">
+                ⌘⇧Z
+              </kbd>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
-
-    {/* Save Size Dialog */}
-    <SaveSizeDialog
-      width={capturedDimensions?.width || 0}
-      height={capturedDimensions?.height || 0}
-      isOpen={showSaveDialog}
-      onSave={handleSavePreset}
-      onSkip={handleSkipSavePreset}
-      maxPresetsReached={presetSizes.length >= 5}
-    />
-
-    {/* Fixed Sizes Selector */}
-    {showFixedSizesSelector && (
-      <FixedSizesSelector
-        onSelectSize={handleFixedSizeSelect}
-        onCancel={handleCancelFixedSize}
-      />
-    )}
-    </>
   );
 }
 

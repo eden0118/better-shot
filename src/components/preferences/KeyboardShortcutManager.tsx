@@ -18,10 +18,8 @@ interface KeyboardShortcutManagerProps {
 }
 
 const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
-  { id: "region", action: "Capture Region", shortcut: "CommandOrControl+Shift+2", enabled: true },
-  { id: "fullscreen", action: "Capture Screen", shortcut: "CommandOrControl+Shift+F", enabled: false },
+  { id: "fullscreen", action: "Capture Screen", shortcut: "CommandOrControl+Shift+F", enabled: true },
   { id: "window", action: "Capture Window", shortcut: "CommandOrControl+Shift+D", enabled: false },
-  { id: "ocr", action: "OCR Region", shortcut: "CommandOrControl+Shift+O", enabled: false },
 ];
 
 function formatShortcut(shortcut: string): string {
@@ -38,7 +36,7 @@ function formatShortcut(shortcut: string): string {
 // Convert a keyboard event to Tauri shortcut format
 function keyEventToShortcut(e: KeyboardEvent): string | null {
   const parts: string[] = [];
-  
+
   // Build modifier string
   if (e.metaKey || e.ctrlKey) {
     parts.push("CommandOrControl");
@@ -49,21 +47,21 @@ function keyEventToShortcut(e: KeyboardEvent): string | null {
   if (e.altKey) {
     parts.push("Alt");
   }
-  
+
   // Get the key - ignore modifier-only presses
   const key = e.key;
   if (["Control", "Shift", "Alt", "Meta", "Command"].includes(key)) {
     return null; // Still waiting for the main key
   }
-  
+
   // Need at least one modifier for a valid shortcut
   if (parts.length === 0) {
     return null;
   }
-  
+
   // Convert key to proper format
   let keyName = key.toUpperCase();
-  
+
   // Handle special keys
   if (key === " ") keyName = "Space";
   else if (key === "ArrowUp") keyName = "Up";
@@ -77,9 +75,9 @@ function keyEventToShortcut(e: KeyboardEvent): string | null {
   else if (key === "Delete") keyName = "Delete";
   else if (key.length === 1) keyName = key.toUpperCase();
   else if (key.startsWith("F") && !isNaN(parseInt(key.slice(1)))) keyName = key; // F1-F12
-  
+
   parts.push(keyName);
-  
+
   return parts.join("+");
 }
 
@@ -145,7 +143,7 @@ export function KeyboardShortcutManager({ onShortcutsChange }: KeyboardShortcutM
           s.id === editingId ? { ...s, shortcut: recordedShortcut } : s
         );
         setShortcuts(newShortcuts);
-        
+
         try {
           const store = await Store.load("settings.json");
           await store.set("keyboardShortcuts", newShortcuts);
