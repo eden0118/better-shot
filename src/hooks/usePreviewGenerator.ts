@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState, useMemo } from "react";
+import React, { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { EditorSettings } from "@/stores/editorStore";
 import { createHighQualityCanvas } from "@/lib/canvas-utils";
 import { drawAnnotationOnCanvas } from "@/lib/annotation-utils";
@@ -280,7 +280,7 @@ export function usePreviewGenerator({
 
   const previewUrlRef = useRef<string | null>(null);
   const renderIdRef = useRef(0);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSettingsRef = useRef<EditorSettings | null>(null);
 
   // Memoize background-related settings for comparison

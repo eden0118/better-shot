@@ -18,13 +18,14 @@ type BackgroundType =
 export async function processScreenshotWithDefaultBackground(
   imagePath: string,
 ): Promise<string> {
-  return new Promise(async (resolve, reject) => {
-    let backgroundType: BackgroundType = "image";
-    let customColor = "#667eea";
-    let defaultBgImage: string = getDefaultBackgroundPath();
-    let bgImage: HTMLImageElement | null = null;
+  return new Promise((resolve, reject) => {
+    (async () => {
+      let backgroundType: BackgroundType = "image";
+      let customColor = "#667eea";
+      let defaultBgImage: string = getDefaultBackgroundPath();
+      let bgImage: HTMLImageElement | null = null;
 
-    try {
+      try {
       const store = await Store.load("settings.json");
       const storedBgType = await store.get<BackgroundType>(
         "defaultBackgroundType",
@@ -189,5 +190,6 @@ export async function processScreenshotWithDefaultBackground(
 
     const assetUrl = convertFileSrc(imagePath);
     img.src = assetUrl;
+    })();
   });
 }

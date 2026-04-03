@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Store } from "@tauri-apps/plugin-store";
 import { toast } from "sonner";
 import { Upload, X, Check } from "lucide-react";

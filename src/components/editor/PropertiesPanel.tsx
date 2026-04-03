@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Annotation, LineType, ArrowType } from "@/types/annotations";

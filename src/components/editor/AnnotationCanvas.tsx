@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, memo } from "react";
+import React, { useRef, useEffect, useState, useCallback, memo } from "react";
 import { Annotation, ToolType, Point } from "@/types/annotations";
 import { drawAnnotationOnCanvas } from "@/lib/annotation-utils";
 import { cn } from "@/lib/utils";
